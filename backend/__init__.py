@@ -23,8 +23,10 @@ def create_app(test_config=None):
     #    def get(self, id):
     #        return {'task': 'Say "Hello, World!"'}
 
-    from .dashboard.dashboard_api import open_rooms
+    from .dashboard.dashboard_api import open_rooms, enter_room, create_room
     api.add_resource(open_rooms, '/findroom')
+    api.add_resource(enter_room, '/enter_room')
+    api.add_resource(create_room, '/create_room')
 
     app.register_blueprint(dashboard, url_prefix="/dashboard")
 

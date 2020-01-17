@@ -2,8 +2,12 @@
 <html>
 <head>
     <title>Hello Vue</title>
+    <-- Load vue -->
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <-- Load socketio -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.dev.js"></script>
+    <-- Load axios for consuming rest api -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 </head>
 
 
@@ -48,9 +52,17 @@
           {{ ch2_v | zero_pad}}
         </option>
       </select>
+
+      <br>
+      <label>Analysis</label>
+      <select v-model="selected_anl">
+        <option v-for="anl in analysis" v-bind:value="anl">
+          {{anl}}
+        </option>
+      </select>
     
       <br>
-      <button v-on:click="$emit('clicked', selected_grp, selected_ch1_h, selected_ch1_v, selected_ch2_h, selected_ch2_v)">Submit selection</button>
+      <button v-on:click="$emit('clicked', selected_grp, selected_ch1_h, selected_ch1_v, selected_ch2_h, selected_ch2_v, selected_anl)">Submit selection</button>
     </div>
   </script>
 
@@ -64,7 +76,6 @@
 
       <script>
         Vue.component('channel-selector', {
-            //props: ['room_id'],
             data() {
               return{
                 message: '',
@@ -74,10 +85,12 @@
                 selected_ch1_v: 1,
                 selected_ch2_h: 1,
                 selected_ch2_v: 1,
+                selected_anl: 'correlation',
                 groups: ["G", "H", "L"],
                 // The syntax for the array produces something akin to range(1,24)
                 h_channels: [...Array(24).keys()].map(x => x+1),
                 v_channels: [...Array(8).keys()].map(x => x+1),
+                analysis: ['correlation', 'bicoherence', 'S(k,w)']
               }
             },
             template: '#channel-selector-template',
@@ -89,6 +102,7 @@
             }
         })
 
+        // Initialize socketio
         var socket = io.connect('http://' + document.domain + ':' + location.port);
         socket.on('connect', function() {
           console.log('Websocket connected - id ' + socket.id);
@@ -102,13 +116,66 @@
             },
 
             methods: {
-              onClicked: function(chgrp, h1, v1, h2, v2) {
+              // Mark the call-back async so that we can wait for the 
+              // call to axios.get
+              onClicked: async function(chgrp, h1, v1, h2, v2, an) {
                 console.log("Submitted new selection: chgrp = " + chgrp + h1 + v1+ h2+v2);
                 this.current_channel.ch_grp = chgrp;
                 this.current_channel.ch1_h = h1;
                 this.current_channel.ch1_v = v1;
                 this.current_channel.ch2_h = h2;
                 this.current_channel.ch2_v = v2;
+                this.current_channel.analysis = an;
+
+                console.log(socket.id);
+
+                var need_new_room = false;
+                var active_room = null;
+
+                await axios.get('/dashboard/findroom', {params:
+                  {
+                    ch_grp: chgrp,
+                    analysis: an,
+                    sid: socket.id,
+                    ch1_h: h1,
+                    ch1_v: v1,
+                    ch2_h: h2,
+                    ch2_v: v2
+                  }}).then(function (response) {
+                    if(response.data.active_room == null)
+                    {
+                      console.log("Need to open a new room");
+                      need_new_room = true;
+                      active_room = null;
+                      console.log(need_new_room);
+                    }
+                    else
+                    {
+                      need_new_room = false;
+                      active_room = response.data.active_room;
+                      console.log("Joining room " + active_room);
+                    }
+                  });
+
+                  if(need_new_room) {       
+                    await axios.post('/dashboard/create_room', {
+                      ch_grp: chgrp,
+                      analysis: an,
+                      sid: socket.id,
+                      ch1_h: h1,
+                      ch1_v: v1,
+                      ch2_h: h2,
+                      ch2_v: v2});
+                  }
+                  else {
+                    await axios.post('/dashboard/enter_room',
+                      {room_id:active_room, sid: socket.id}).then(function() {
+                        console.log("Trying to enter room " + active_room);
+                      });
+      
+                  }
+
+
               }
             },
 
