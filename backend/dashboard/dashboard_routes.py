@@ -1,5 +1,5 @@
 # -*- Encoding: UTF-8 -*-
-# file dashboard_v2/backend/views/dashboard_routes.py
+# file dashboard_v2/backend/dashboard/dashboard_routes.py
 
 from flask import render_template, send_from_directory
 

@@ -6,6 +6,7 @@ and it tells Python that the flaskr directory should be treated as a package."""
 
 from flask import Flask
 from flask_socketio import SocketIO
+from flask_restful import Api, Resource, url_for
 
 socketio = SocketIO()
 
@@ -16,7 +17,16 @@ def create_app(test_config=None):
 
     # Register the dashboard blueprint in the main __init__.py:
     from .dashboard import dashboard
-    app.register_blueprint(dashboard, url_prefix="/")
+    api = Api(dashboard)
+
+    #class TodoItem(Resource):
+    #    def get(self, id):
+    #        return {'task': 'Say "Hello, World!"'}
+
+    from .dashboard.dashboard_api import open_rooms
+    api.add_resource(open_rooms, '/findroom')
+
+    app.register_blueprint(dashboard, url_prefix="/dashboard")
 
     # Start running socketio
     socketio.init_app(app)

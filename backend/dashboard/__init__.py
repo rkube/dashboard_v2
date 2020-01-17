@@ -6,7 +6,11 @@ from flask import Blueprint
 # the template folder is called templates. File names passed to render_template are relative to this path
 dashboard = Blueprint("dashboard", __name__, template_folder="templates")
 
-from . import dashboard_routes, dashboard_events
+
+ACTIVE_ROOMS = {}
+
+
+from . import dashboard_routes, dashboard_events, dashboard_api
 
 
 # End file __init__.py

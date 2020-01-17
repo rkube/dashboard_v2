@@ -11,26 +11,109 @@
 <body>
 
   
+  <!-- This is the template for the dashboard-view-->
+  <script type="text/x-template" id="channel-selector-template">
+    <div>
+      <label> Group</label>
+      <select v-model="selected_grp">
+        <option v-for="group in groups" v-bind:value="group">
+          {{ group }}
+        </option>
+      </select>
+      <br> 
+
+      <label> Ch1_h </label>
+      <select v-model="selected_ch1_h">
+        <option v-for="ch1_h in h_channels" v-bind:value="ch1_h">
+          {{ ch1_h | zero_pad }}
+        </option>
+      </select>
+      <label> Ch1_v </label>
+      <select v-model="selected_ch1_v">
+        <option v-for="ch1_v in v_channels" v-bind:value="ch1_v">
+          {{ ch1_v | zero_pad}}
+        </option>
+      </select>
+
+      <br>
+      <label> Ch2_h </label>
+      <select v-model="selected_ch2_h">
+        <option v-for="ch2_h in h_channels" v-bind:value="ch2_h">
+          {{ ch2_h | zero_pad}}
+        </option>
+      </select>
+      <label> Ch2_v </label>
+      <select v-model="selected_ch2_v">
+        <option v-for="ch2_v in v_channels" v-bind:value="ch2_v">
+          {{ ch2_v | zero_pad}}
+        </option>
+      </select>
+    
+      <br>
+      <button v-on:click="$emit('clicked', selected_grp, selected_ch1_h, selected_ch1_v, selected_ch2_h, selected_ch2_v)">Submit selection</button>
+    </div>
+  </script>
+
     <div id="app-dashboard">
-      <dashboard-view v-bind:room_id=19></dashboard-view>
+      <h3>Selected channel:
+         <!--{{ selected_grp }}{{selected_ch1_h | zero_pad}}{{ selected_ch1_v | zero_pad}}
+        {{selected_ch2_h | zero_pad}}{{ selected_ch2_v | zero_pad}} -->
+      </h3>
+      <channel-selector v-on:clicked="onClicked"></channel-selector>
     </div>
 
       <script>
-        Vue.component('dashboard-view', {
-            props: ['room_id'],
-            template: '<h3>I have room_id {{ room_id }}</h3>'
+        Vue.component('channel-selector', {
+            //props: ['room_id'],
+            data() {
+              return{
+                message: '',
+                selected_grp: 'G',
+                selected_ch1_h: 1,
+                selected_ch1_v: 1,
+                selected_ch1_v: 1,
+                selected_ch2_h: 1,
+                selected_ch2_v: 1,
+                groups: ["G", "H", "L"],
+                // The syntax for the array produces something akin to range(1,24)
+                h_channels: [...Array(24).keys()].map(x => x+1),
+                v_channels: [...Array(8).keys()].map(x => x+1),
+              }
+            },
+            template: '#channel-selector-template',
+            filters: {
+              zero_pad: function(value) {
+                if (value < 10) return '0' + value;
+                else return '' + value;
+              }
+            }
         })
 
-        var socket = io();
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+        socket.on('connect', function() {
+          console.log('Websocket connected - id ' + socket.id);
+        });
 
-        var app7 = new Vue({
+        var app_dashboard = new Vue({
             el: '#app-dashboard',
 
             data: {
-                current_channel: [
-                { id: 0, room_id: 'ROOM1_ID' },
-                { id: 1, room_id: 'ROOM2_ID' },
-                ]
+              current_channel: {ch_grp: 'G', ch1_h: 1, ch1_v: 1, ch2_h:1, ch2_v:1}
+            },
+
+            methods: {
+              onClicked: function(chgrp, h1, v1, h2, v2) {
+                console.log("Submitted new selection: chgrp = " + chgrp + h1 + v1+ h2+v2);
+                this.current_channel.ch_grp = chgrp;
+                this.current_channel.ch1_h = h1;
+                this.current_channel.ch1_v = v1;
+                this.current_channel.ch2_h = h2;
+                this.current_channel.ch2_v = v2;
+              }
+            },
+
+            mounted() {
+              console.log("I am mounted");
             },
 
             created() {
