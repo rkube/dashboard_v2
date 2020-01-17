@@ -15,11 +15,11 @@ def create_app(test_config=None):
     app.config['TESTING'] = True
 
     # Register the dashboard blueprint in the main __init__.py:
-    from .views import dashboard
+    from .dashboard import dashboard
     app.register_blueprint(dashboard, url_prefix="/")
 
+    # Start running socketio
     socketio.init_app(app)
-
     return app
 
 # End of file __init__py
