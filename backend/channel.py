@@ -75,9 +75,9 @@ class db_update_channel():
     def add_client(self, client_sid, socketio):
         """Subscribes a new client to this channel."""
         print(f"--- db_update_channel.add_client: adding client {client_sid}")
-        if len(self.subscribed_clients) == 0:
-            self.thread = InterruptibleThread(socketio)
-            socketio.start_background_task(self.thread.check_db_for_updates, self.channel_id)
+        #if len(self.subscribed_clients) == 0:
+        #    self.thread = InterruptibleThread(socketio)
+        #    socketio.start_background_task(self.thread.check_db_for_updates, self.channel_id)
 
         self.subscribed_clients.append(client_sid)  
 
@@ -88,7 +88,8 @@ class db_update_channel():
         self.subscribed_clients.remove(client_sid)
 
         if len(self.subscribed_clients) == 0:
-            self.thread._running = False
+            None
+            #self.thread._running = False
 
     @classmethod
     def generate_channel_id(cls):

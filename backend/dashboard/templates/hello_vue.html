@@ -71,6 +71,7 @@
          <!--{{ selected_grp }}{{selected_ch1_h | zero_pad}}{{ selected_ch1_v | zero_pad}}
         {{selected_ch2_h | zero_pad}}{{ selected_ch2_v | zero_pad}} -->
       </h3>
+      <h3> Current room: {{ current_room }} </h3>
       <channel-selector v-on:clicked="onClicked"></channel-selector>
     </div>
 
@@ -112,7 +113,8 @@
             el: '#app-dashboard',
 
             data: {
-              current_channel: {ch_grp: 'G', ch1_h: 1, ch1_v: 1, ch2_h:1, ch2_v:1}
+              current_channel: {ch_grp: 'G', ch1_h: 1, ch1_v: 1, ch2_h:1, ch2_v:1},
+              current_room: null
             },
 
             methods: {
@@ -132,7 +134,7 @@
                 var need_new_room = false;
                 var active_room = null;
 
-                await axios.get('/dashboard/findroom', {params:
+                await axios.get('/dashboard/open_rooms', {params:
                   {
                     ch_grp: chgrp,
                     analysis: an,
@@ -144,36 +146,43 @@
                   }}).then(function (response) {
                     if(response.data.active_room == null)
                     {
-                      console.log("Need to open a new room");
+                      console.log("open_rooms returned null. Need to open a new room");
                       need_new_room = true;
                       active_room = null;
-                      console.log(need_new_room);
                     }
                     else
                     {
+                      console.log("open_rooms returned " + response.data.active_room + ", attempting to joing room");
                       need_new_room = false;
                       active_room = response.data.active_room;
-                      console.log("Joining room " + active_room);
+
                     }
                   });
 
-                  if(need_new_room) {       
-                    await axios.post('/dashboard/create_room', {
+                  console.log("need_new_room = " + need_new_room);
+
+                  if(need_new_room) {   
+                    console.log("Sending post to create_room");    
+                    await axios.get('/dashboard/create_room', {params:
+                    {
                       ch_grp: chgrp,
                       analysis: an,
                       sid: socket.id,
                       ch1_h: h1,
                       ch1_v: v1,
                       ch2_h: h2,
-                      ch2_v: v2});
-                  }
-                  else {
-                    await axios.post('/dashboard/enter_room',
-                      {room_id:active_room, sid: socket.id}).then(function() {
-                        console.log("Trying to enter room " + active_room);
+                      ch2_v: v2}}).then(function(response){
+                        console.log("Joined room " + response.data.new_room_id);
+                        this.current_room = response.data.new_room_id;
                       });
-      
                   }
+                  //else {
+                  //  await axios.post('/dashboard/enter_room',
+                  //    {room_id:active_room, sid: socket.id}).then(function() {
+                  //      console.log("Trying to enter room " + active_room);
+                  //    });
+                  //    //this.current_room = active_room;
+                  //}
 
 
               }
