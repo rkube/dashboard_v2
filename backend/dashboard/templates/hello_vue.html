@@ -134,7 +134,20 @@
                 var need_new_room = false;
                 var active_room = null;
 
-                await axios.get('/dashboard/open_rooms', {params:
+                var tmp = null;
+
+                // Get a list of currently subscribed to rooms. 
+                // Request to leave that rooms
+                await axios.get("/dashboard/subscribed_rooms", 
+                {params: {sid: socket.id}}).then(function(response) 
+                {    
+                    response.data.subscribed_rooms.forEach(function(entry){
+                      console.log(" And now in a for loop: " + entry)
+                      socket.on("connect", function(socket) {socket.emit("leave", entry)});
+                    });
+                });
+
+                await axios.get("/dashboard/open_rooms", {params:
                   {
                     ch_grp: chgrp,
                     analysis: an,
@@ -144,38 +157,53 @@
                     ch2_h: h2,
                     ch2_v: v2
                   }}).then(function (response) {
-                    if(response.data.active_room == null)
-                    {
-                      console.log("open_rooms returned null. Need to open a new room");
-                      need_new_room = true;
-                      active_room = null;
-                    }
-                    else
-                    {
-                      console.log("open_rooms returned " + response.data.active_room + ", attempting to joing room");
-                      need_new_room = false;
-                      active_room = response.data.active_room;
-
-                    }
+                    console.log("open_rooms returned: " + response.data.active_room + ".");
+                    socket.on("connection", function(socket) {socket.emit("join", response.data.active_room)});
                   });
 
-                  console.log("need_new_room = " + need_new_room);
 
-                  if(need_new_room) {   
-                    console.log("Sending post to create_room");    
-                    await axios.get('/dashboard/create_room', {params:
-                    {
-                      ch_grp: chgrp,
-                      analysis: an,
-                      sid: socket.id,
-                      ch1_h: h1,
-                      ch1_v: v1,
-                      ch2_h: h2,
-                      ch2_v: v2}}).then(function(response){
-                        console.log("Joined room " + response.data.new_room_id);
-                        this.current_room = response.data.new_room_id;
-                      });
-                  }
+                // await axios.get('/dashboard/open_rooms', {params:
+                //   {
+                //     ch_grp: chgrp,
+                //     analysis: an,
+                //     sid: socket.id,
+                //     ch1_h: h1,
+                //     ch1_v: v1,
+                //     ch2_h: h2,
+                //     ch2_v: v2
+                //   }}).then(function (response) {
+                //     if(response.data.active_room == null)
+                //     {
+                //       console.log("open_rooms returned null. Need to open a new room");
+                //       need_new_room = true;
+                //       active_room = null;
+                //     }
+                //     else
+                //     {
+                //       console.log("open_rooms returned " + response.data.active_room + ", attempting to joing room");
+                //       need_new_room = false;
+                //       active_room = response.data.active_room;
+
+                //     }
+                //   });
+
+                //   console.log("need_new_room = " + need_new_room);
+
+                //   if(need_new_room) {   
+                //     console.log("Sending post to create_room");    
+                //     await axios.get('/dashboard/create_room', {params:
+                //     {
+                //       ch_grp: chgrp,
+                //       analysis: an,
+                //       sid: socket.id,
+                //       ch1_h: h1,
+                //       ch1_v: v1,
+                //       ch2_h: h2,
+                //       ch2_v: v2}}).then(function(response){
+                //         console.log("Joined room " + response.data.new_room_id);
+                //         this.current_room = response.data.new_room_id;
+                //       });
+                //   }
                   //else {
                   //  await axios.post('/dashboard/enter_room',
                   //    {room_id:active_room, sid: socket.id}).then(function() {

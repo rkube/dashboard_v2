@@ -7,8 +7,9 @@ from flask_restful import Resource, reqparse
 from flask_socketio import emit, join_room, leave_room
 
 from . import ACTIVE_ROOMS
-from .. import channel
-from .. import socketio
+#from .. import channel
+
+import channel 
 
 import json
 
@@ -35,6 +36,29 @@ ch1_v, int, channel1, vertical.   1 <= ch1_v <= 8
 ch2_h, int, channel2, horizontal. 1 <= ch2_h <= 24
 ch2_v, int, channel2, vertical.   1 <= ch2_v <= 8
 """
+
+
+class subscribed_rooms(Resource):
+    def __init__(self):
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument("sid", type=str, location="args")
+
+    def get(self):
+        """Returns a list of rooms that the client currently subscribes to."""
+
+        global ACTIVE_ROOMS
+
+        return_ch_list = []
+
+        args = self.parser.parse_args()
+        for channel_id, channel in ACTIVE_ROOMS.items():
+            if args.sid in channel.subscribed_clients:
+                return_ch_list.append(channel_id)
+
+        return_ch_list.append("dummy1")
+        return_ch_list.append("dummy2")
+
+        return({"subscribed_rooms": return_ch_list})
 
 
 class open_rooms(Resource):
@@ -64,15 +88,17 @@ class open_rooms(Resource):
             if ((loop_channel.ch1 == new_ch1) & 
                 (loop_channel.ch2 == new_ch2) & 
                 (loop_channel.analysis_type == args["analysis"])):
-            #if args['sid'] in loop_channel.subscribed_clients:
                 current_app.logger.info(f"In open_rooms::get: Channel {loop_channel.channel_id} has the requested configuration")
                 return({"active_room": loop_channel.channel_id})
-
             else:
                 current_app.logger.info(f"In open_rooms::get: Active room {channel_id} has different configuration than the one requested")
 
-        current_app.logger.info(f"In open_rooms::get: Could not match request to a room. returning active_room=None")
-        return({"active_room": None})
+        # If we are here, there is no channel with the requested configuration.
+        new_room = channel.db_update_channel(new_ch1, new_ch2, args['analysis'])
+        ACTIVE_ROOMS[new_room.channel_id] = new_room
+        current_app.logger.info(f"In open_rooms::get: Could not match request to a room. Created {new_room.channel_id}: {new_room}")
+
+        return({"active_room": new_room.channel_id})
 
 
 class enter_room(Resource):
@@ -153,11 +179,12 @@ class create_room(Resource):
 
         new_room = channel.db_update_channel(new_ch1, new_ch2, args['analysis'])
         current_app.logger.info(f"In create_room::get: Creating room id={new_room.channel_id}: {new_room}.")
-        new_room.add_client(args['sid'], socketio)
-        ACTIVE_ROOMS[new_room.channel_id] = new_room
-        join_room(new_room.channel_id, args['sid'])
+        
+        #new_room.add_client(args['sid'], socketio)
+        #ACTIVE_ROOMS[new_room.channel_id] = new_room
+        #join_room(new_room.channel_id, args['sid'])
 
-        current_app.logger.info(f"Exiting")
+        #current_app.logger.info(f"Exiting")
 
         return({"new_room_id": new_room.channel_id})
 
