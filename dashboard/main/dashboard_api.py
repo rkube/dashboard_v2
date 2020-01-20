@@ -35,13 +35,6 @@ ch2_v, int, channel2, vertical.   1 <= ch2_v <= 8
 """
 
 
-class test_route(Resource):
-    def get(self):
-        global ACTIVE_ROOMS
-        current_app.logger.info("Test route")
-        return("Hello, World. ACTIVE_ROOMS = {ACTIVE_ROOMS}.")
-
-
 class subscribed_rooms(Resource):
     def __init__(self):
         self.parser = reqparse.RequestParser()
@@ -59,9 +52,7 @@ class subscribed_rooms(Resource):
             if args.sid in channel.subscribed_clients:
                 return_ch_list.append(channel_id)
 
-        return_ch_list.append("dummy1")
-        return_ch_list.append("dummy2")
-
+        current_app.logger.info(f"In subscribed_rooms::get client {args.sid} is in rooms {return_ch_list}")
         return({"subscribed_rooms": return_ch_list})
 
 class open_rooms(Resource):

@@ -16,16 +16,34 @@ def test_connect():
     current_app.logger.info(f"Client connected")
     #emit('status', {'msg': session.get('name') + ' has entered the room.'}, room=room)
 
-@socketio.on("leave")
-def leave_room():
-    """unsubscribes a client from a room"""
-    current_app.logger.info(f"In leaving room")
+@socketio.on("request-leave")
+def request_leave_room(data):
+    """Handles leave requests from clients"""
+    assert("room" in data.keys())
+    assert("sid" in data.keys())
+
+    current_app.logger.info(f"request-leave, room: {data['room']}")
+    leave_room(data['room'])
+    ACTIVE_ROOMS[data['room']].remove_client(data['sid'])
+
+    
+    if( len(ACTIVE_ROOMS[data['room']].subscribed_clients) == 0 ):
+        current_app.logger.info(f"request-leave: deleting room {data['room']}")
+        ACTIVE_ROOMS.pop(data['room'])
 
 
-@socketio.on("join")
-def join_room(data):
-    """subscribes a client to a given room"""
-    current_app.logger.info(f"Joining room. data = {data}")
+
+@socketio.on("request-join")
+def requst_join_room(data):
+    """Handles join requests from clients"""
+    assert("room" in data.keys())
+    assert("sid" in data.keys())
+
+    current_app.logger.info(f"request-join. room: {data}")
+
+    #join_room(data['room'])
+    join_room(data['room'])
+    ACTIVE_ROOMS[data['room']].add_client(data['sid'], socketio)
 
 
 

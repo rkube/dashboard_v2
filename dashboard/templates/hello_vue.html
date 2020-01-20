@@ -142,8 +142,9 @@
                 {params: {sid: socket.id}}).then(function(response) 
                 {    
                     response.data.subscribed_rooms.forEach(function(entry){
-                      console.log(" And now in a for loop: " + entry)
-                      socket.on("connect", function(socket) {socket.emit("leave", entry)});
+                      //console.log(" And now in a for loop: " + entry)
+                      //socket.on("connect", function(socket) {socket.emit("leave", entry)});
+                      socket.emit("request-leave", {sid: socket.id, room: entry});
                     });
                 });
 
@@ -158,7 +159,10 @@
                     ch2_v: v2
                   }}).then(function (response) {
                     console.log("open_rooms returned: " + response.data.active_room + ".");
-                    socket.on("connection", function(socket) {socket.emit("join", response.data.active_room)});
+                    //socket.on("connect", function(socket) {
+                    //  console.log("socket = " + socket);
+                    //  socket.emit("join", response.data.active_room)});
+                    socket.emit("request-join", {sid: socket.id, room: response.data.active_room});
                   });
 
 

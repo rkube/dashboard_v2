@@ -14,10 +14,9 @@ def create_app(debug=False):
 
     # Register the dashboard blueprint in the main __init__.py:
     from .main import dashboard
-    from .main.dashboard_api import test_route, subscribed_rooms, open_rooms
+    from .main.dashboard_api import subscribed_rooms, open_rooms
 
     api = Api(dashboard)
-    api.add_resource(test_route, "/test_route")
 
     api.add_resource(open_rooms, '/open_rooms')
     #api.add_resource(enter_room, '/enter_room')

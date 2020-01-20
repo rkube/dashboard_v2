@@ -19,10 +19,11 @@ We are using flask with blueprints to show the user a html file with different v
 |==============================|
 
 
+The structure of the project folder is copied from
+https://github.com/miguelgrinberg/Flask-SocketIO-Chat
+
 Run the app from within the dashboard_v2 folder like this:
-$ export FLASK_APP=backend 
-$ export FLASK_ENV=development
-$ flask run --no-reload
+$ python backend.py
 
 Notes:
 Start with --no-reload when using socketio:

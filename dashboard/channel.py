@@ -73,23 +73,23 @@ class db_update_channel():
         return(print_str)
 
     def add_client(self, client_sid, socketio):
-        """Subscribes a new client to this channel."""
-        print(f"--- db_update_channel.add_client: adding client {client_sid}")
-        #if len(self.subscribed_clients) == 0:
-        #    self.thread = InterruptibleThread(socketio)
-        #    socketio.start_background_task(self.thread.check_db_for_updates, self.channel_id)
+        """Adds the clients session_id to this channel."""
+        print(f"--- db_update_channel.add_client: adding client {client_sid} to {self.channel_id}")
+        if len(self.subscribed_clients) == 0:
+            self.thread = InterruptibleThread(socketio)
+            socketio.start_background_task(self.thread.check_db_for_updates, self.channel_id)
 
         self.subscribed_clients.append(client_sid)  
 
     def remove_client(self, client_sid):
         """Removes a client from the subscribed list. Stops the worker thread
         if this was the last client."""
-        print(f"--- db_update_channel.remove_client: removing client {client_sid}")
+        print(f"--- db_update_channel.remove_client: removing client {client_sid} from {self.channel_id}")
         self.subscribed_clients.remove(client_sid)
 
         if len(self.subscribed_clients) == 0:
-            None
-            #self.thread._running = False
+            print(f"--- db_update_channel.remove_client: room is empty. Stopping thread")
+            self.thread._running = False
 
     @classmethod
     def generate_channel_id(cls):
