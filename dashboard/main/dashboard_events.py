@@ -25,12 +25,10 @@ def request_leave_room(data):
     current_app.logger.info(f"request-leave, room: {data['room']}")
     leave_room(data['room'])
     ACTIVE_ROOMS[data['room']].remove_client(data['sid'])
-
     
     if( len(ACTIVE_ROOMS[data['room']].subscribed_clients) == 0 ):
         current_app.logger.info(f"request-leave: deleting room {data['room']}")
         ACTIVE_ROOMS.pop(data['room'])
-
 
 
 @socketio.on("request-join")
@@ -41,7 +39,6 @@ def requst_join_room(data):
 
     current_app.logger.info(f"request-join. room: {data}")
 
-    #join_room(data['room'])
     join_room(data['room'])
     ACTIVE_ROOMS[data['room']].add_client(data['sid'], socketio)
 
