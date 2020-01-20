@@ -3,7 +3,7 @@
 
 from flask import session, current_app
 from flask_socketio import emit, join_room, leave_room
-from . import socketio
+from .. import socketio
 
 from . import ACTIVE_ROOMS
 

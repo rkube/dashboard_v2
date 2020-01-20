@@ -15,5 +15,5 @@ def hello_dashboard():
 
 @dashboard.route('/hello_vue')
 def hello_vue():
-    return send_from_directory("dashboard/templates", "hello_vue.html")
+    return send_from_directory("templates", "hello_vue.html")
 # End of file dashboard.py
