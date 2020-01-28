@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Hello Vue</title>
-    <-- Load vue -->
-    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <-- Load socketio -->
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.dev.js"></script>
-    <-- Load axios for consuming rest api -->
-    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <title>Hello Vue</title>
+  <-- Load vue -->
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <-- Load socketio -->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.dev.js"></script>
+  <-- Load axios for consuming rest api -->
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <-- Load plotly --->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script> 
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
 </head>
 
 
 
 <body>
-
-  
   <!-- This is the template for the dashboard-view-->
   <script type="text/x-template" id="channel-selector-template">
     <div>
@@ -66,115 +69,157 @@
       <p>I'm now in room {{ current_room }}.</p>
       <p> Current data {{ current_data }} </p>
 
+    </div>
+
     
     </div>
   </script>
 
-    <div id="app-dashboard">
-        <channel-selector></channel-selector>
-    </div>
 
-      <script>
-        Vue.component('channel-selector', {          
-          data() {
-            return {
-              counter: 0,
-              message: '',
-              current_room: null,
-              selected_grp: 'G',
-              selected_ch1_h: 1,
-              selected_ch1_v: 1,
-              selected_ch1_v: 1,
-              selected_ch2_h: 1,
-              selected_ch2_v: 1,
-              selected_anl: 'correlation',
-              groups: ["G", "H", "L"],
-              // The syntax for the array produces something akin to range(1,24)
-              h_channels: [...Array(24).keys()].map(x => x+1),
-              v_channels: [...Array(8).keys()].map(x => x+1),
-              analysis: ['correlation', 'bicoherence', 'S(k,w)'],
-              foo: 0,
-              socket: io.connect('http://' + document.domain + ':' + location.port),
-              current_data: null
-            }
-          },
 
-          methods: {
-            onClicked_comp: async function()
-            {
-              // We need to make a reference to this if we want to access the
-              // member variables of data in this method:
-              // https://stackoverflow.com/questions/36176073/what-is-vue-way-to-access-to-data-from-methods
-              var vm = this;
-              this.counter += 1;
-              console.log("I am onClicked_comp. selected_grp = " + this.selected_grp
-                        + ", ch1_h = " + this.selected_ch1_h
-                        + ", ch1_v = " + this.selected_ch1_v
-                        + ", ch1_h = " + this.selected_ch2_h
-                        + ", ch2_v = " + this.selected_ch2_v
-                        + ", analysis = " + this.selected_anl);
 
-              await axios.get("/dashboard/subscribed_rooms", {params: {sid: vm.socket.id}})
-                .then(function(response)
-                {
-                  response.data.subscribed_rooms.forEach(function(entry)
-                  {
-                    vm.socket.emit("request-leave", {sid: vm.socket.id, room: entry});
-                    vm.current_room = "Empty";
-                  })
-                });
-                
-              await axios.get("/dashboard/open_rooms", {params: {
-                    ch_grp: this.selected_grp,
-                    analysis: this.selected_anl,
-                    sid: this.socket.id,
-                    ch1_h: this.selected_ch1_h,
-                    ch1_v: this.selected_ch1_v,
-                    ch2_h: this.selected_ch2_h,
-                    ch2_v: this.selected_ch2_v}})
-                .then(function(response)
-                {
-                  vm.socket.emit("request-join", {sid:vm.socket.id, room: response.data.active_room});
-                  vm.current_room = response.data.active_room;
-                });
-            }},
+  <div id="app-dashboard">
+    <channel-selector></channel-selector>
+  </div>
 
-          created() {
-            var vm = this;
-            console.log("Component created. websocket id = " + vm.socket.id);
+  <br>
+  <div id="plotdiv" style="width:600px;height:250px;">
 
-            // Install socket.emit hook
-            vm.socket.on("new_data", function(msg)
-            {
-              vm.current_data = msg['data'];
-              console.log("I just got new data");
+  </div>
+
+  <script>
+    Vue.component('channel-selector', {
+      data() {
+        return {
+          counter: 0,
+          message: '',
+          current_room: null,
+          selected_grp: 'G',
+          selected_ch1_h: 1,
+          selected_ch1_v: 1,
+          selected_ch1_v: 1,
+          selected_ch2_h: 1,
+          selected_ch2_v: 1,
+          selected_anl: 'correlation',
+          groups: ["G", "H", "L"],
+          // The syntax for the array produces something akin to range(1,24)
+          h_channels: [...Array(24).keys()].map(x => x + 1),
+          v_channels: [...Array(8).keys()].map(x => x + 1),
+          analysis: ['correlation', 'bicoherence', 'S(k,w)'],
+          foo: 0,
+          socket: io.connect('http://' + document.domain + ':' + location.port),
+          current_data: null,
+          traces: [{
+            x: [1, 2, 3, 4],
+            y: [10, 15, 13, 17],
+            type: 'scatter'
+          }]
+        }
+      },
+
+      methods: {
+        onClicked_comp: async function () {
+          // We need to make a reference to this if we want to access the
+          // member variables of data in this method:
+          // https://stackoverflow.com/questions/36176073/what-is-vue-way-to-access-to-data-from-methods
+          var vm = this;
+          this.counter += 1;
+          console.log("I am onClicked_comp. selected_grp = " + this.selected_grp
+            + ", ch1_h = " + this.selected_ch1_h
+            + ", ch1_v = " + this.selected_ch1_v
+            + ", ch1_h = " + this.selected_ch2_h
+            + ", ch2_v = " + this.selected_ch2_v
+            + ", analysis = " + this.selected_anl);
+
+          await axios.get("/dashboard/subscribed_rooms", { params: { sid: vm.socket.id } })
+            .then(function (response) {
+              response.data.subscribed_rooms.forEach(function (entry) {
+                vm.socket.emit("request-leave", { sid: vm.socket.id, room: entry });
+                vm.current_room = "Empty";
+              })
             });
 
-          },
-
-          template: '#channel-selector-template',
-          filters: {
-            zero_pad: function(value) {
-              if (value < 10) return '0' + value;
-              else return '' + value;
+          await axios.get("/dashboard/open_rooms", {
+            params: {
+              ch_grp: this.selected_grp,
+              analysis: this.selected_anl,
+              sid: this.socket.id,
+              ch1_h: this.selected_ch1_h,
+              ch1_v: this.selected_ch1_v,
+              ch2_h: this.selected_ch2_h,
+              ch2_v: this.selected_ch2_v
             }
-          }
+          })
+            .then(function (response) {
+              vm.socket.emit("request-join", { sid: vm.socket.id, room: response.data.active_room });
+              vm.current_room = response.data.active_room;
+            });
+        }
+      },
+
+      created() {
+        var vm = this;
+        console.log("Component created. websocket id = " + vm.socket.id);
+
+        // Install socket.emit hook
+        vm.socket.on("new_data", function (msg) {
+          vm.current_data = msg['data'];
+          console.log("I just got new data" + msg['data'].length);
+
+          //var update = {'y': vm.current_data};
+          var new_x = [...Array(msg['data'].length).keys()]
+          var new_y = Array(msg['data'])
+          var update = {x: new_x, y: new_y}
+
+          Plotly.restyle("plotdiv", update);
         });
+        //console.log(vm.chart.traces[0].x);
+      },
+
+      mounted(){
+        var vm = this;
+        console.log("Compoenent: mounted")
+        //var trace1 = ;
+      
+      //var trace2 = {
+        //x: [1, 2, 3, 4],
+        //y: [16, 5, 11, 9],
+        //type: 'scatter'
+      //};
+
+      //var layout = {
+      //  title:'Line and Scatter Plot'
+      //};
+      
+      //var data = [trace1, trace2];
+        Plotly.newPlot("plotdiv", vm.traces);
+      },
 
 
-        var app_dashboard = new Vue({
-            el: '#app-dashboard',
 
-            mounted() {
-              console.log("main vue instance: I am mounted");
-            },
+      template: '#channel-selector-template',
+      filters: {
+        zero_pad: function (value) {
+          if (value < 10) return '0' + value;
+          else return '' + value;
+        }
+      }
+    });
 
-            created() {
-              console.log("main vue instance: I am created");
-            }
 
-        });
-      </script>
+    var app_dashboard = new Vue({
+      el: '#app-dashboard',
+
+      mounted() {
+        console.log("main vue instance: I am mounted");
+      },
+
+      created() {
+        console.log("main vue instance: I am created");
+      }
+
+    });
+  </script>
 
 </body>
 

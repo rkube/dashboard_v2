@@ -12,8 +12,7 @@ eventlet.monkey_patch()
 from dashboard import create_app, socketio
 app = create_app(debug=True)
 
-if __name__ == "__main__":
-    
+if __name__ == "__main__":    
     socketio.run(app)
 
 # End of file __init__py
