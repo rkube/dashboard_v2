@@ -13,30 +13,82 @@ import gridfs
 
 from .channel import channel, channel_pair
 
-  
+
+
+def mongo_query(fs, mongo_coll, mongo_filter):
+    """Queries analysis results from mongodb gridfs
+
+    Input:
+    ------
+    fs, gridfs.GridFS: Link to the gridfs instance we are querying
+    mongo_coll, pymongo.collection.Collection: Collection to be queired
+    mongo_filter, dict: Filter used to query
+    ch_idx, int: Index of gridfs array to return
+
+    Returns:
+    --------
+    anl_result, ndarray: Result of the analysis
+    """
+
+    print(mongo_filter)
+    anl_entry = mongo_coll.find_one(mongo_filter)
+    print(anl_entry)
+    gridfs_id = anl_entry['result_gridfs']
+    print(gridfs_id)
+    res = fs.get(gridfs_id)
+    print(res)
+    gridfs_data = res.read()
+    t1 = pickle.loads(gridfs_data)
+
+    return t1
+
+
 
 class InterruptibleThread:
     """Define an interruptible thread that is gathering data for an db_update_channel"""
     def __init__(self, socketio):
         self._running = True
-        self.socketio = socketio  
+        self.socketio = socketio
 
     def terminate(self):
         self._running = False
 
-    def check_db_for_updates(self, room_name):
+    def check_db_for_updates(self, fs, mongo_coll, mongo_filter, ch_idx, room_id):
         """This process runs in the background and checks the DB for updates"""
         # Open a change stream on the data collection.
         # https://api.mongodb.com/python/current/api/pymongo/collection.html#pymongo.collection.Collection.watch
 
-        #for _ in range(50):
-        while self._running:  
+        # Get max time index where that we have data for:
+        max_idx = mongo_coll.count_documents({"analysis_name": mongo_filter["analysis_name"],
+                                              "description": "analysis results",
+                                              "tidx": {"$gt": 0}})
+        for tidx in range(max_idx):
             self.socketio.sleep(seconds=1.0) 
-            print(f"Creating random channel NEWTHINGS!!! data for room {room_name}")
+            print(f"Querying mongo {tidx}/{max_idx}")
+            mongo_filter.update({"tidx": tidx})
+            print("mongo_filter = ", mongo_filter)
+            # Find the entry for the current time index
+            anl_entry = mongo_coll.find_one(mongo_filter)
+            # Extract the link to the gridfs file
+            gridfs_id = anl_entry['result_gridfs']
+            # Extract file from gridfs
+            res = fs.get(gridfs_id)
+            gridfs_data = res.read()
+            t1 = pickle.loads(gridfs_data)
+            # Get selected channel index
+            data = t1[ch_idx, :]
+            print("new_data: ", data)
+            # Push data to web-client
+            self.socketio.emit("new_data", {"data": data.tolist()}, room=room_id)
 
-            #data = np.random.normal(0.0, 1.0, size=(128,))
-            data = np.random.randint(0, 100, size=(128,))
-            self.socketio.emit("new_data", {"data": data.tolist()}, room=room_name)
+
+        # while self._running:  
+        #     self.socketio.sleep(seconds=1.0) 
+        #     print(f"Creating random channel NEWTHINGS!!! data for room {room_id}")
+
+            
+        #     data = np.random.randint(0, 100, size=(128,))
+        #     self.socketio.emit("new_data", {"data": data.tolist()}, room=room_id)
 
         print("--- InterruptibleThread: Exiting")  
 
@@ -54,6 +106,7 @@ class room_manager():
         self.subscribed_clients = []
         self.thread = None
 
+
         with open("mongo_secret", "r") as df:
             lines = df.readlines()
         mongo_uri = lines[0].strip()
@@ -63,11 +116,11 @@ class room_manager():
 
         #print(f"__{mongo_user}__, __{mongo_pass}__")
         client = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass)
-        db = client.get_database()
-        coll = db[mongo_collection]
+        self.db = client.get_database()
+        self.coll = self.db[mongo_collection]
 
         # Get the channel serialization for the analysis
-        res = coll.find_one({"description": "metadata", "analysis": self.analysis_type})
+        res = self.coll.find_one({"description": "metadata", "analysis": self.analysis_type})
 
         target_pair = channel_pair(self.ch1, self.ch2)
         print(f"Looking for channel index of {target_pair}")
@@ -80,9 +133,12 @@ class room_manager():
             if (channel_pair(channel1, channel2) == target_pair):
                 print(f"Found target pair with index {chpair_idx}")
 
-            
+        self.chpair_idx = chpair_idx
 
-  
+        # mongo_filter defines what the room pulls out of the change stream
+        self.mongo_filter = {"analysis_name": self.analysis_type, "description": "analysis results"}
+        self.fs = gridfs.GridFS(self.db)
+
 
     def __eq__(self, other):
         return((self.ch1 == other.ch1) & (self.ch2 == other.ch2) & (self.analysis_type == other.analysis_type))
@@ -99,7 +155,7 @@ class room_manager():
         print(f"--- manage_room.add_client: adding client {client_sid} to {self.room_id}")
         if len(self.subscribed_clients) == 0:
             self.thread = InterruptibleThread(socketio)
-            socketio.start_background_task(self.thread.check_db_for_updates, self.room_id)
+            socketio.start_background_task(self.thread.check_db_for_updates, self.fs, self.coll, self.mongo_filter, self.chpair_idx, self.room_id)
 
         self.subscribed_clients.append(client_sid)  
 
