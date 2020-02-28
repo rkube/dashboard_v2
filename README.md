@@ -6,7 +6,7 @@ The current layout in all its un-css'ed glory:
 
 Renders a live-plot of data pushed to a mongodb database to a web-page.
 
-* The render component is implemented using [vue.js[(https://vuejs.org/)] and [plotly](https://plot.ly/javascript/)
+* The render component is implemented using [vue.js](https://vuejs.org/) and [plotly](https://plot.ly/javascript/)
     * The backend is written in [flask](https://flask.palletsprojects.com/en/1.1.x/) and ingests data from [mongodb](https://www.mongodb.com/)
 
 
