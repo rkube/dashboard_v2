@@ -75,9 +75,6 @@
     </div>
   </script>
 
-
-
-
   <div id="app-dashboard">
     <channel-selector></channel-selector>
   </div>
@@ -110,9 +107,11 @@
           socket: io.connect('http://' + document.domain + ':' + location.port),
           current_data: null,
           traces: [{
-            x: [1, 2, 3, 4],
-            y: [10, 15, 13, 17],
-            type: 'scatter'
+            x: [10, 20, 30., 40., 50.],
+            y: [1.0, 2.0],
+            z: [[-1.0, -1.0, -1.1, -1.0, -1.0],
+                [-1.0, -1.0, -1.1, -1.0, -1.0]],
+            type: 'contour'
           }]
         }
       },
@@ -160,20 +159,84 @@
       created() {
         var vm = this;
         console.log("Component created. websocket id = " + vm.socket.id);
+        // Install socket.emit hook. This routine receives the updated data packet from
+        // the backend and prepares it for the plotly plot.
 
-        // Install socket.emit hook
         vm.socket.on("new_data", function (msg) {
           vm.current_data = msg['data'];
           console.log("I just got new data" + msg['data'].length);
+          //console.log("Length of current x-axis: " + vm.traces[0].x.length)
+          //console.log("This is the current x-axis: " + vm.traces[0].x);
+          
 
-          //var update = {'y': vm.current_data};
-          var new_x = [...Array(msg['data'].length).keys()]
-          var new_y = Array(msg['data'])
-          var update = {x: new_x, y: new_y}
+          // If-clause will likely be executed when the first data packet arrives.
+          // Create new x-axis.
+          if (msg['data'].length != vm.traces[0].x.length){
+            console.log("Received data with more data than current x-axis!");
+            // x-axis is frequency
+            var new_x = [...Array(msg['data'].length).keys()];
+            // y-axis is time
+            var new_y = new Array(10);
+            // z-data is amplitude at a given frequency and time
+            var new_z = new Array(10);
+            
+            // Create new y-values.
+            // Create new 2d-array structure for z
+            for(var j = 0; j < 10; j++)
+            {
+              new_y[j] = j;
+              new_z[j] = new Array(msg['data'].length);
+            }
 
-          Plotly.restyle("plotdiv", update);
+            // Initialize new_z with zeros, except the first row.
+            for (var t = 1; t < 10; t++)
+            {
+              for(var j = 0; j < new_x.length; j++)
+              {
+                new_z[t][j] = 0.0;
+              }
+            }
+            // After initialization, put the new data into new_z[0][..]
+            for(var j = 0; j < new_x.length; j++)
+            {
+              new_z[0][j] = msg['data'][j];
+            }
+            
+            console.log("Updating: new_x = " + new_x);
+            console.log("Updating: new_y = " + new_y);
+            console.log("Updating: new_z = " + new_z);
+            // Generate the plot-update
+            var update = {x: [new_x], y: [new_y], z: [new_z]};
+            Plotly.restyle("plotdiv", update);
+          }
+          // Here we already have the y-axis and the z-array.
+          // We only need to push-back the data in the z-array by one as to make space for the
+          // new data. We also need to insert the new data.
+          else
+          {
+            console.log("New data as same length as current x-axis")
+            //var cur_y = vm.traces[0].y;
+            var cur_z = vm.traces[0].z;
+            // Push data in z back by one row.
+            for(var t = 0; t < 10 - 1; t++)
+            {
+              for(var k = 0; k < cur_z[0].length; k++)
+              {
+                cur_z[t][k] = cur_z[t + 1][k];
+              }
+            }
+
+            for(var k = 0; k < cur_z[10 - 1].length; k++)
+            {
+              cur_z[10 - 1][k] = msg['data'][k];
+            }
+
+            var update = {z: [cur_z]};
+            Plotly.restyle("plotdiv", update);
+
+          }
+
         });
-        //console.log(vm.chart.traces[0].x);
       },
 
       mounted(){
@@ -181,8 +244,6 @@
         console.log("Compoenent: mounted")
         Plotly.newPlot("plotdiv", vm.traces);
       },
-
-
 
       template: '#channel-selector-template',
       filters: {

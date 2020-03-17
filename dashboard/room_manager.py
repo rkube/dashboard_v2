@@ -77,7 +77,7 @@ class InterruptibleThread:
             t1 = pickle.loads(gridfs_data)
             # Get selected channel index
             data = t1[ch_idx, :]
-            print("new_data: ", data)
+            print("new_data: ", data[:10])
             # Push data to web-client
             self.socketio.emit("new_data", {"data": data.tolist()}, room=room_id)
 
@@ -105,7 +105,6 @@ class room_manager():
         self.room_id = self.generate_room_id() 
         self.subscribed_clients = []
         self.thread = None
-
 
         with open("mongo_secret", "r") as df:
             lines = df.readlines()
@@ -171,7 +170,6 @@ class room_manager():
 
     @classmethod
     def generate_room_id(cls):
-    
         """Generates a random 5 digit ID"""
         id_length = 5
         return ''.join(random.SystemRandom().choice(

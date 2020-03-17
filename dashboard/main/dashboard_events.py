@@ -43,5 +43,4 @@ def requst_join_room(data):
     ACTIVE_ROOMS[data['room']].add_client(data['sid'], socketio)
 
 
-
 # End of file dashboard_events.py
