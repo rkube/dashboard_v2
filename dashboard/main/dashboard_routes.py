@@ -16,4 +16,12 @@ def hello_dashboard():
 @dashboard.route('/hello_vue')
 def hello_vue():
     return send_from_directory("templates", "hello_vue.html")
+
+@dashboard.route("/newvue")
+def hello_newvue():
+    try:
+        return render_template("index.html")
+    except TemplateNotFound:
+        abort(404)
+
 # End of file dashboard.py
