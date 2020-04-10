@@ -1,17 +1,29 @@
 <template>
   <div id="app">
-    <DashboardView plotid="plot1"></DashboardView>
-    <DashboardView plotid="plot2"></DashboardView>
+    <div class="container">
+      <div class="row">
+        <CollSelector/>
+      </div>
+      <div class="row">
+        <DashboardView plotid="plot1"></DashboardView>
+      </div>
+      <div class="row">
+        <DashboardView plotid="plot2"></DashboardView>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import Vue from "vue/dist/vue.js";
+import CollSelector from "./components/CollSelector.vue";
 import DashboardView from "./components/DashboardView.vue";
+
 
 Vue.config.productionTip = false;
 export default {
   components: {
+    CollSelector,
     DashboardView
   }
 };

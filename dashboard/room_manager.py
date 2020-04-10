@@ -13,8 +13,6 @@ import gridfs
 
 from .channel import channel, channel_pair
 
-
-
 def mongo_query(fs, mongo_coll, mongo_filter):
     """Queries analysis results from mongodb gridfs
 
@@ -30,18 +28,13 @@ def mongo_query(fs, mongo_coll, mongo_filter):
     anl_result, ndarray: Result of the analysis
     """
 
-    print(mongo_filter)
     anl_entry = mongo_coll.find_one(mongo_filter)
-    print(anl_entry)
     gridfs_id = anl_entry['result_gridfs']
-    print(gridfs_id)
     res = fs.get(gridfs_id)
-    print(res)
     gridfs_data = res.read()
     t1 = pickle.loads(gridfs_data)
 
     return t1
-
 
 
 class InterruptibleThread:
@@ -63,10 +56,10 @@ class InterruptibleThread:
                                               "description": "analysis results",
                                               "tidx": {"$gt": 0}})
         for tidx in range(max_idx):
-            self.socketio.sleep(seconds=1.0) 
+            self.socketio.sleep(seconds=0.02) 
             print(f"Querying mongo {tidx}/{max_idx}")
             mongo_filter.update({"tidx": tidx})
-            print("mongo_filter = ", mongo_filter)
+            print(f"mongo_filter = {mongo_filter}")
             # Find the entry for the current time index
             anl_entry = mongo_coll.find_one(mongo_filter)
             # Extract the link to the gridfs file
@@ -77,7 +70,6 @@ class InterruptibleThread:
             t1 = pickle.loads(gridfs_data)
             # Get selected channel index
             data = t1[ch_idx, :]
-            print("new_data: ", data[:10])
             # Push data to web-client
             self.socketio.emit("new_data", {"data": data.tolist()}, room=room_id)
 
@@ -174,8 +166,6 @@ class room_manager():
         id_length = 5
         return ''.join(random.SystemRandom().choice(
             string.ascii_uppercase) for _ in range(id_length))
-
-
 
 
     # db = mongo_client["delta-fusion"]

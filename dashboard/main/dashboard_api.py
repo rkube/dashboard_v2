@@ -84,7 +84,7 @@ class open_rooms(Resource):
                 (loop_room.ch2 == new_ch2) & 
                 (loop_room.analysis_type == args["analysis"])):
                 current_app.logger.info(f"In open_rooms::get: Room {loop_room.room_id} has the requested configuration")
-                return({"active_room": room_id.room_id})
+                return({"active_room": loop_room.room_id})
             else:
                 current_app.logger.info(f"In open_rooms::get: Active room {room_id} has different configuration than the one requested")
 
