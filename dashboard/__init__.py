@@ -19,8 +19,6 @@ def create_app(debug=False):
     api = Api(dashboard)
 
     api.add_resource(open_rooms, '/open_rooms')
-    #api.add_resource(enter_room, '/enter_room')
-    #api.add_resource(create_room, '/create_room')
     api.add_resource(subscribed_rooms, '/subscribed_rooms')
     
     app.register_blueprint(dashboard, url_prefix="/dashboard")
@@ -28,6 +26,5 @@ def create_app(debug=False):
     # Start running socketio
     socketio.init_app(app)
     return app
-
 
 # End file __init__.py
