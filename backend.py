@@ -8,7 +8,6 @@ from flask import Flask
 import eventlet
 eventlet.monkey_patch()
 
-
 from dashboard import create_app, socketio
 app = create_app(debug=True)
 

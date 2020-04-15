@@ -58,8 +58,10 @@
 
 <script>
 import Plotly from "plotly.js-dist/plotly";
-import io from "socket.io-client";
+//import io from "socket.io-client";
 const axios = require("axios").default;
+const io = require("socket.io-client");
+const socket_io = io.connect("http://0.0.0.0:5000");
 
 export default {
   name: "DashboardView",
@@ -79,8 +81,7 @@ export default {
       h_channels: [...Array(24).keys()].map(x => x + 1),
       v_channels: [...Array(8).keys()].map(x => x + 1),
       analysis: ["cross_correlation", "coherence", "cross_phase", "cross_power"],
-      foo: 0,
-      socket: io.connect("http://" + document.domain + ":" + location.port),
+      //socket: io.connect("http://" + document.domain + ":" + location.port),
       current_data: null,
       traces: [
         {
@@ -105,10 +106,10 @@ export default {
                    + ", ch2_v = " + this.selected_ch2_v
                    + ", analysis = " + this.selected_anl)  
       await axios.get("/dashboard/subscribed_rooms", { 
-        params: { sid: vm.socket.id } })
+        params: { sid: socket_io.id } })
         .then(function(response) {
           response.data.subscribed_rooms.forEach(function(entry) {
-            vm.socket.emit("request-leave", { sid: vm.socket.id, room: entry });
+            socket_io.emit("request-leave", { sid: socket_io.id, room: entry });
             vm.current_room = "Empty";
           });
         });
@@ -116,7 +117,7 @@ export default {
           params: {
             ch_grp: this.selected_grp,
             analysis: this.selected_anl,
-            sid: this.socket.id,
+            sid: socket_io.id,
             ch1_h: this.selected_ch1_h,
             ch1_v: this.selected_ch1_v,
             ch2_h: this.selected_ch2_h,
@@ -124,8 +125,8 @@ export default {
           }
         })
         .then(function(response) {
-          vm.socket.emit("request-join", {
-            sid: vm.socket.id, room: response.data.active_room
+          socket_io.emit("request-join", {
+            sid: socket_io.id, room: response.data.active_room
           });
           vm.current_room = response.data.active_room;
         });
@@ -133,7 +134,7 @@ export default {
   },
   created() {
     var vm = this;
-    console.log("Component created. websocket id = " + vm.socket.id);
+    console.log("Component created. websocket id = " + socket_io.id);
     // Install socket.emit hook. This routine receives the updated data packet from
     // the backend and prepares it for the plotly plot.
     var j = 0;
@@ -141,7 +142,7 @@ export default {
     var k = 0;
     var update = null;
 
-    vm.socket.on("new_data", function(msg) {
+    socket_io.on("new_data", function(msg) {
       vm.current_data = msg["data"];
       console.log("I just got new data" + msg["data"].length);
       //console.log("Length of current x-axis: " + vm.traces[0].x.length)
