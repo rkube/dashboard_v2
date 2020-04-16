@@ -43,9 +43,8 @@ class subscribed_rooms(Resource):
 
     def get(self):
         """Returns a list of rooms that the client currently subscribes to."""
-
+  
         global ACTIVE_ROOMS
-
         return_ch_list = []
 
         args = self.parser.parse_args()
