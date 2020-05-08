@@ -1,5 +1,6 @@
 Live web-based visualization for [delta](https://github.com/rkube/delta)
 
+See the dashboard in action: https://www.youtube.com/watch?v=AXG3ma_f-iM
 
 The current layout in all its un-css'ed glory: 
 ![alt-text](https://github.com/rkube/dashboard_v2/blob/master/doc/dashboard_v2.png)
