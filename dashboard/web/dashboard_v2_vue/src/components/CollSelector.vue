@@ -13,7 +13,7 @@ export default {
   name: "CollSelector",
   data: function() {
     return {
-      coll_name: "4HWUVK",
+      coll_name: "ABC123",
       run_config: ""
     };
   },

@@ -55,24 +55,40 @@ class InterruptibleThread:
         max_idx = mongo_coll.count_documents({"analysis_name": mongo_filter["analysis_name"],
                                               "description": "analysis results",
                                               "tidx": {"$gt": 0}})
-        for tidx in range(max_idx):
-            self.socketio.sleep(seconds=0.02) 
-            print(f"Querying mongo {tidx}/{max_idx}")
-            mongo_filter.update({"tidx": tidx})
-            print(f"mongo_filter = {mongo_filter}")
-            # Find the entry for the current time index
-            anl_entry = mongo_coll.find_one(mongo_filter)
-            # Extract the link to the gridfs file
-            gridfs_id = anl_entry['result_gridfs']
-            # Extract file from gridfs
-            res = fs.get(gridfs_id)
-            gridfs_data = res.read()
-            t1 = pickle.loads(gridfs_data)
-            # Get selected channel index
-            data = t1[ch_idx, :]
-            # Push data to web-client
-            self.socketio.emit("new_data", {"data": data.tolist()}, room=room_id)
+        # for tidx in range(max_idx):
+        #     self.socketio.sleep(seconds=0.02) 
+        #     print(f"Querying mongo {tidx}/{max_idx}")
+        #     mongo_filter.update({"tidx": tidx})
+        #     print(f"mongo_filter = {mongo_filter}")
+        #     # Find the entry for the current time index
+        #     anl_entry = mongo_coll.find_one(mongo_filter)
+        #     # Extract the link to the gridfs file
+        #     gridfs_id = anl_entry['result_gridfs']
+        #     # Extract file from gridfs
+        #     res = fs.get(gridfs_id)
+        #     gridfs_data = res.read()
+        #     t1 = pickle.loads(gridfs_data)
+        #     # Get selected channel index
+        #     data = t1[ch_idx, :]
+        #     # Push data to web-client
+        #     self.socketio.emit("new_data", {"data": data.tolist()}, room=room_id)
 
+        print("Entering check_db_for_updates: ", mongo_coll)
+        with mongo_coll.watch() as stream:
+            for item in stream:
+                print(f"Got an item: _id={item['fullDocument']['_id']}")
+                try:
+                    gridfs_id = item['fullDocument']['result_gridfs']
+                except: 
+                    print("Could not access gridfs_id")
+                    continue
+
+                res = fs.get(gridfs_id)
+                gridfs_data = res.read()
+                t1 = pickle.loads(gridfs_data)
+                data = t1[ch_idx, :]
+
+                self.socketio.emit("new_data", {"data": data.tolist()}, room=room_id)
 
         # while self._running:  
         #     self.socketio.sleep(seconds=1.0) 
@@ -109,12 +125,9 @@ class room_manager():
         client = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass)
         self.db = client.get_database()
         self.coll = self.db[mongo_collection]
-
         # Get the channel serialization for the analysis
         res = self.coll.find_one({"description": "metadata", "analysis": self.analysis_type})
-
         target_pair = channel_pair(self.ch1, self.ch2)
-        print(f"Looking for channel index of {target_pair}")
 
         channel_ser = res['channel_serialization'][0]
         for chpair_idx, cp_serial in enumerate(channel_ser):

@@ -40,7 +40,7 @@ def new_query():
 
     We are processing this endpoint as a request.
 
-    Tip: Try 4HWUVK
+    Tip: Try ABC123
     """
     # Get the collection name from the request
     coll_name = request.args.get("coll_name")
