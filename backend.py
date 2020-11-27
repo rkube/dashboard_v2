@@ -11,6 +11,7 @@ eventlet.monkey_patch()
 from dashboard import create_app, socketio
 app = create_app(debug=True)
 
-if __name__ == "__main__":    
+if __name__ == "__main__":
+    # Add host=0.0.0.0, otherwise we can't access flask when running inside docker.
     socketio.run(app, host="0.0.0.0")
 # End of file backend.py

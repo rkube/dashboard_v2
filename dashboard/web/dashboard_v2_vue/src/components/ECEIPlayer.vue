@@ -27,7 +27,7 @@
     </div>
     <div class="row" >
       <div id="ecei_plot" ref="ecei_plot"
-        :style = "{height: '600px', width: '1600px', backgroundColor: 'powderblue'}"
+        :style = "{height: '1200px', width: '600px', backgroundColor: 'powderblue'}"
       ></div>
     </div>
   </div>
@@ -114,23 +114,17 @@ export default {
         // Emulate linspace to set r and z ranges for the contour plot.
         let dr = (math.max(response.data["rarr"]) - math.min(response.data["rarr"])) / 7.0
         let r_range = math.range(math.min(response.data["rarr"]), math.max(response.data["rarr"]), dr);
+        console.log(response.data["rarr"]);///
 
         let dz = (math.max(response.data["zarr"]) - math.min(response.data["zarr"])) / 23.0
         let z_range = math.range(math.min(response.data["zarr"]), math.max(response.data["zarr"]), dz);
+        console.log(response.data["zarr"]);///
 
         let new_z = math.reshape(this.time_chunk_data[50], [24, 8]);
         // Calls to Plotly.restyle expect the data arrays wrapped in an additional array
         // https://plotly.com/javascript/plotlyjs-function-reference/#plotlyreact
-
-        // Create a new colorbar
-        //let maxval = response.data["maxval"]
-        //let minval = response.data["minval"]
-        //let stdval = response.data["stdval"]
-        
-
-
-
-        let update = {y: [r_range._data], x: [z_range._data], z: [new_z]};
+    
+        let update = {y: [z_range._data], x: [r_range._data], z: [new_z]};
         Plotly.restyle(this.$refs.ecei_plot, update);
       } // if this.selected_time_chunk != this.current_time_chunk
     },
