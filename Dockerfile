@@ -19,7 +19,7 @@ SHELL ["conda", "run", "-n", "flask", "/bin/bash", "-c"]
 RUN echo "Make sure flask is installed:" && python -c "import flask"
 
 # Get a specific version of the dasboard
-#RUN git clone https://github.com/rkube/dashboard_v2.git && cd dashboard_v2 && git checkout 371cae5 
+RUN git clone --branch ecei_player https://github.com/rkube/dashboard_v2.git && cd dashboard_v2
 COPY . dashboard_v2
 
 # Change workdir to cloned code repo
