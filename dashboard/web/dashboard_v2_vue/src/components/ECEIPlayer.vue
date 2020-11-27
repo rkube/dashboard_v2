@@ -25,8 +25,10 @@
         :lazy="true"
       ></vue-slider>
     </div>
-    <div class="row" style="background-color=#22a;">
-      <div id="ecei_plot" ref="ecei_plot"></div>
+    <div class="row" >
+      <div id="ecei_plot" ref="ecei_plot"
+        :style = "{height: '600px', width: '1600px', backgroundColor: 'powderblue'}"
+      ></div>
     </div>
   </div>
 </template>
@@ -107,18 +109,28 @@ export default {
         this.time_chunk_data = math.transpose(math.reshape(this.time_chunk_data, response.data["chunk_shape"]));
 
         this.bad_channels = response.data["bad_channels"];
+        // For testing of the plotting code see: https://codepen.io/rkube/pen/MWjWPag
 
         // Emulate linspace to set r and z ranges for the contour plot.
-        let dr = (math.max(response.data["rarr"]) - math.min(response.data["rarr"])) / 8.0
+        let dr = (math.max(response.data["rarr"]) - math.min(response.data["rarr"])) / 7.0
         let r_range = math.range(math.min(response.data["rarr"]), math.max(response.data["rarr"]), dr);
 
-        let dz = (math.max(response.data["zarr"]) - math.min(response.data["zarr"])) / 24.0
+        let dz = (math.max(response.data["zarr"]) - math.min(response.data["zarr"])) / 23.0
         let z_range = math.range(math.min(response.data["zarr"]), math.max(response.data["zarr"]), dz);
 
-        let new_z = math.reshape(this.time_chunk_data[50], [8, 24]);
+        let new_z = math.reshape(this.time_chunk_data[50], [24, 8]);
         // Calls to Plotly.restyle expect the data arrays wrapped in an additional array
         // https://plotly.com/javascript/plotlyjs-function-reference/#plotlyreact
-        let update = {x: [r_range], y: [z_range], z: [new_z]};
+
+        // Create a new colorbar
+        //let maxval = response.data["maxval"]
+        //let minval = response.data["minval"]
+        //let stdval = response.data["stdval"]
+        
+
+
+
+        let update = {y: [r_range._data], x: [z_range._data], z: [new_z]};
         Plotly.restyle(this.$refs.ecei_plot, update);
       } // if this.selected_time_chunk != this.current_time_chunk
     },
@@ -132,13 +144,25 @@ export default {
   mounted() {
     // var vm = this;
     console.log("ECEIPlayer mounted. collection is " + this.$store.state.run_config);
-    console.log(this.$refs.ecei_plot);
     // https://stackoverflow.com/questions/36970062/vue-js-document-getelementbyid-shorthand
-    let x = math.range(1, 8);
-    let y = math.range(1, 24);
-    let z = math.random([8, 24]);
-    let data = [{z: z, x: x, y: y, type: 'contour'}];
-    Plotly.newPlot(this.$refs.ecei_plot, data);
+
+
+    let x = math.range(2, 10);
+    let y = math.range(1, 25);
+    let z = math.random([24, 8]);
+
+    // We need to use the _data member of the ranges created here
+    // Plotly expects x and y to be instances of array.
+    // (x._data instanceof Array) evaluates true 
+    // while
+    // (x instanceof Array) evaluates false
+    let data = [{z: z, x: x._data, y: y._data, type: 'contour'}];
+    let layout = {
+      title: "ECEI data",
+      xaxis: { title: "R / m" },
+      yaxis: { title: "Z / m" }
+    };
+    Plotly.newPlot(this.$refs.ecei_plot, data, layout);
   }
 };
 </script>

@@ -6,6 +6,7 @@ import io
 import pickle
 import base64
 import numpy as np
+from scipy import interpolate
 
 from pymongo import MongoClient
 import gridfs
@@ -137,6 +138,12 @@ def get_ecei_frames():
     Returns:
         ???
 
+
+    Be careful about sending data in the correct type.
+    By default, we are sending json payloads.
+    Data extracted from MongoDBs bson format can usually be passed without problems.
+    Numpy arrays have to be converted. Base64 is an easy option to do so.
+
     Test me by executing:
     $ curl -X GET "http://localhost:5000/dashboard/get_ecei_frames?run_id=234&time_chunk_idx=140
     """
@@ -170,24 +177,39 @@ def get_ecei_frames():
     data_gfs = gridfs_handle.read()
     data_out = pickle.loads(data_gfs)
 
-    
+    #print(f"Got: data_out.shape={data_out.shape}, bad_channels={type(post['bad_channels'])}, rarr={type(post['rarr'])}, zarr={type(post['zarr'])}")
 
-    bad_channels=post["bad_channels"]
-    rarr=post["rarr"],
-    zarr=post["zarr"]
+    bad_channels = np.array(post["bad_channels"])
+    rarr = np.array(post["rarr"])
+    zarr = np.array(post["zarr"])
 
-    print(f"Got: data_out.shape={data_out.shape}, bad_channels={type(bad_channels)}, rarr={type(rarr)}, zarr={type(zarr)}")
+    # Interpolate away bad pixels.
+    frames_ip = np.zeros_like(data_out)
+    # Get sampling points of only the good data
+    rr1 = rarr[~bad_channels]
+    zz1 = zarr[~bad_channels]
+    for frame_idx in range(data_out.shape[1]):
+        # Interpolate each frame individually
+        frame_new = interpolate.griddata((rr1, zz1), data_out[~bad_channels, frame_idx].ravel(), (rarr, zarr), method='cubic')
+        frames_ip[:, frame_idx] = frame_new[:]
 
-    #test_data = np.array([1.0, 2.0, 3.0], dtype=np.float64)
+    # Calculate max, min, std for colorbar
+    maxval, minval, stdval = frames_ip.max(), frames_ip.min(), frames_ip.std()
+    # print(frames_ip[39, :])
+    frames_ip[0, :] = -5 * stdval
+    frames_ip[-1, :] = 5 * stdval
+
+    #print(f"Got: data_out.shape={data_out.shape}, bad_channels={type(bad_channels)}, rarr={type(rarr)}, zarr={type(zarr)}")
 
     # ?Try sending as octet-stream: https://tools.ietf.org/html/rfc2046
     # For now: encode as base64
 
-    response = jsonify(time_chunk_data=base64.b64encode(data_out).decode("utf-8"),
+    response = jsonify(time_chunk_data=base64.b64encode(frames_ip).decode("utf-8"),
                        chunk_shape=data_out.shape,
-                       rarr=rarr,
-                       zarr=zarr,
-                       bad_channels=bad_channels)
+                       rarr=post["rarr"],
+                       zarr=post["zarr"],
+                       bad_channels=post["bad_channels"],
+                       maxval=maxval, minval=minval, stdval=stdval)
     return response
 
 # End of file dashboard.py
