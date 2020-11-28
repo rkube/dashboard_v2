@@ -36,8 +36,6 @@ jsonfinder==0.4.2
 jsonschema==3.2.0
 Mako==1.1.2
 MarkupSafe==1.1.1
-mkl-fft==1.0.15
-mkl-service==2.3.0
 monotonic==1.5
 more-itertools==8.2.0
 numpy==1.17.4
