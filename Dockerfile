@@ -26,7 +26,7 @@ COPY . dashboard_v2
 WORKDIR /dashboard_v2/dashboard_v2
 RUN cd dashboard/web/dashboard_v2_vue && npm install
 RUN cd dashboard/web/dashboard_v2_vue && ./node_modules/.bin/vue-cli-service build --mode development --no-clean
-COPY mongo_secret /dashboard_v2/dashboard_v2
+# COPY mongo_secret /dashboard_v2/dashboard_v2
 RUN ln -sf /dev/stdout dashboard.log
 
 ENTRYPOINT [ "/bin/bash", "start.sh"]
