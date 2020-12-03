@@ -5,7 +5,7 @@ import store from "./store.js";
 Vue.config.productionTip = false;
 
 new Vue({
-  store,
+  store: store,
   created: function () {
     console.log("App is created. location: " + location.host + ", port:" + location.port);
   },

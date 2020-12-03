@@ -177,11 +177,13 @@ def get_ecei_frames():
     data_gfs = gridfs_handle.read()
     data_out = pickle.loads(data_gfs)
 
-    #print(f"Got: data_out.shape={data_out.shape}, bad_channels={type(post['bad_channels'])}, rarr={type(post['rarr'])}, zarr={type(post['zarr'])}")
+    # Get meta-data for the timechunk
+    post_meta = coll.find_one({"description_new": "chunk_metadata", "chunk_idx": time_chunk_idx})
+    print(f"Got post_meta = {post_meta}")
 
-    bad_channels = np.array(post["bad_channels"])
-    rarr = np.array(post["rarr"])
-    zarr = np.array(post["zarr"])
+    bad_channels = np.array(post_meta["bad_channels"])
+    rarr = np.array(post_meta["rarr"])
+    zarr = np.array(post_meta["zarr"])
 
     # Interpolate away bad pixels.
     frames_ip = np.zeros_like(data_out)
@@ -206,9 +208,9 @@ def get_ecei_frames():
 
     response = jsonify(time_chunk_data=base64.b64encode(frames_ip).decode("utf-8"),
                        chunk_shape=data_out.shape,
-                       rarr=post["rarr"],
-                       zarr=post["zarr"],
-                       bad_channels=post["bad_channels"],
+                       rarr=post_meta["rarr"],
+                       zarr=post_meta["zarr"],
+                       bad_channels=post_meta["bad_channels"],
                        maxval=maxval, minval=minval, stdval=stdval)
     return response
 

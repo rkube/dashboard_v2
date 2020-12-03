@@ -24,8 +24,6 @@ import CollSelector from "./components/CollSelector.vue";
 import DashboardView from "./components/DashboardView.vue";
 import ECEIPlayer from "./components/ECEIPlayer.vue";
 
-
-
 Vue.config.productionTip = false;
 export default {
   components: {

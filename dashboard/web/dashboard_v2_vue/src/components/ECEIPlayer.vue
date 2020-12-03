@@ -14,9 +14,9 @@
     <div class="row">
       <button v-on:click="get_time_chunk_data">Load data</button>
     </div>
-    <div class="column">
-      <div>Time index in chunk {{selected_time_idx}}</div>
-      <vue-slider 
+    <div class="row">
+      <div>Time index in chunk {{ selected_time_idx }} Time in shot: {{ selected_time }}s</div>
+      <vue-slider
         v-model="selected_time_idx"
         v-on:change="update_plot_tidx"
         :min="0"
@@ -25,8 +25,10 @@
         :lazy="true"
       ></vue-slider>
     </div>
-    <div class="row" >
-      <div id="ecei_plot" ref="ecei_plot"
+    <div class="row">
+      <div
+        id="ecei_plot"
+        ref="ecei_plot"
         :style = "{height: '1200px', width: '600px', backgroundColor: 'powderblue'}"
       ></div>
     </div>
@@ -37,10 +39,10 @@
 import Plotly from "plotly.js-dist/plotly";
 const axios = require("axios").default;
 // Load entire mathjs library, see here:https://mathjs.org/docs/custom_bundling.html
-import { create, all } from 'mathjs'
+import { create, all } from "mathjs";
 const math = create(all);
-import VueSlider from 'vue-slider-component';
-import 'vue-slider-component/theme/default.css'
+import VueSlider from "vue-slider-component";
+import "vue-slider-component/theme/default.css";
 
 
 export default {
@@ -52,6 +54,9 @@ export default {
     return {
       selected_time_chunk: 0,
       current_time_chunk: 0,
+      tstart: 0.0,
+      dt: 0.0001,
+      selected_time: 0.005,
       available_time_chunks: [0],
       time_chunk_data: null,
       selected_time_idx: 50,
@@ -94,11 +99,13 @@ export default {
         var request = "/dashboard/get_ecei_frames?run_id=" + run_id + "&time_chunk_idx=" + this.selected_time_chunk
         let response = await axios.get(request);
         this.curent_time_chunk = this.selected_time_chunk;
+        console.log(response);
 
-        // Convert time_chunk_data from base64 to float64 array
+        // // Convert time_chunk_data from base64 to float64 array
         let binary_string = atob(response.data["time_chunk_data"]);
         let buffer = new ArrayBuffer(binary_string.length);
         let bytes_buffer = new Uint8Array(buffer);
+
 
         for (let i = 0; i < binary_string.length; i++) {
           bytes_buffer[i] = binary_string.charCodeAt(i);
@@ -109,30 +116,43 @@ export default {
         this.time_chunk_data = math.transpose(math.reshape(this.time_chunk_data, response.data["chunk_shape"]));
 
         this.bad_channels = response.data["bad_channels"];
+        this.tstart = response.data["tstart"];
+        this.tend = response.data["tend"];
+        this.dt = response.data["dt"];
         // For testing of the plotting code see: https://codepen.io/rkube/pen/MWjWPag
 
         // Emulate linspace to set r and z ranges for the contour plot.
         let dr = (math.max(response.data["rarr"]) - math.min(response.data["rarr"])) / 7.0
         let r_range = math.range(math.min(response.data["rarr"]), math.max(response.data["rarr"]), dr);
-        console.log(response.data["rarr"]);///
+        console.log(response.data["rarr"]); ///
 
         let dz = (math.max(response.data["zarr"]) - math.min(response.data["zarr"])) / 23.0
         let z_range = math.range(math.min(response.data["zarr"]), math.max(response.data["zarr"]), dz);
-        console.log(response.data["zarr"]);///
+        console.log(response.data["zarr"]); ///
 
         let new_z = math.reshape(this.time_chunk_data[50], [24, 8]);
         // Calls to Plotly.restyle expect the data arrays wrapped in an additional array
         // https://plotly.com/javascript/plotlyjs-function-reference/#plotlyreact
     
-        let update = {y: [z_range._data], x: [r_range._data], z: [new_z]};
+        let update = {x: [r_range._data], y: [z_range._data], z: [new_z]};
         Plotly.restyle(this.$refs.ecei_plot, update);
-      } // if this.selected_time_chunk != this.current_time_chunk
+      } // end if this.selected_time_chunk != this.current_time_chunk
     },
     update_plot_tidx: function() {
+      /** 
+      Callback for the slider. 
+      
+      Updates the plot with data for the newly selected time index.
+      Also updated the time in the current chunk.
+      
+      **/
       console.log("Updating the time index of the plot");
-      let new_z = math.reshape(this.time_chunk_data[this.selected_time_idx], [8, 24]);
-      let update = {z: [new_z]};
+      let new_z = math.reshape(this.time_chunk_data[this.selected_time_idx], [24, 8]);
+      let update = {z: [new_z], ncontours: 32};
+      this.selected_time = this.tstart + this.selected_time_idx * this.dt;
+      console.log(new_z);
       Plotly.restyle(this.$refs.ecei_plot, update);
+
     }
   },
   mounted() {
@@ -150,7 +170,7 @@ export default {
     // (x._data instanceof Array) evaluates true 
     // while
     // (x instanceof Array) evaluates false
-    let data = [{z: z, x: x._data, y: y._data, type: 'contour'}];
+    let data = [{z: z, x: x._data, y: y._data, type: 'contour', ncontours: 32}];
     let layout = {
       title: "ECEI data",
       xaxis: { title: "R / m" },
