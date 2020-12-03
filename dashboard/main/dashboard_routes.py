@@ -170,7 +170,7 @@ def get_ecei_frames():
     print(coll)
     fs = gridfs.GridFS(db)
     # Get the data post
-    post = coll.find_one({"description": "analysis results", "chunk_idx": time_chunk_idx})
+    post = coll.find_one({"description": "analysis results", "analysis_name": "null", "chunk_idx": time_chunk_idx})
     print(post)
     # Pull data from gridfs
     gridfs_handle = fs.get(post["result_gridfs"])
@@ -190,10 +190,17 @@ def get_ecei_frames():
     # Get sampling points of only the good data
     rr1 = rarr[~bad_channels]
     zz1 = zarr[~bad_channels]
-    for frame_idx in range(data_out.shape[1]):
-        # Interpolate each frame individually
-        frame_new = interpolate.griddata((rr1, zz1), data_out[~bad_channels, frame_idx].ravel(), (rarr, zarr), method='cubic')
-        frames_ip[:, frame_idx] = frame_new[:]
+
+    # There can be errors in the interpolation. This flag tells us.
+    interpolate_ok = True
+    try:
+        for frame_idx in range(data_out.shape[1]):
+            # Interpolate each frame individually
+            frame_new = interpolate.griddata((rr1, zz1), data_out[~bad_channels, frame_idx].ravel(), (rarr, zarr), method='cubic')
+            frames_ip[:, frame_idx] = frame_new[:]
+    except ValueError as e:
+        print(f"Could not interpolate.")
+        interpolate_ok = False
 
     # Calculate max, min, std for colorbar
     maxval, minval, stdval = frames_ip.max(), frames_ip.min(), frames_ip.std()
@@ -201,17 +208,21 @@ def get_ecei_frames():
     frames_ip[0, :] = -5 * stdval
     frames_ip[-1, :] = 5 * stdval
 
-    #print(f"Got: data_out.shape={data_out.shape}, bad_channels={type(bad_channels)}, rarr={type(rarr)}, zarr={type(zarr)}")
+    # print(f"Got: data_out.shape={data_out.shape}, bad_channels={type(bad_channels)}, rarr={type(rarr)}, zarr={type(zarr)}")
 
     # ?Try sending as octet-stream: https://tools.ietf.org/html/rfc2046
     # For now: encode as base64
 
     response = jsonify(time_chunk_data=base64.b64encode(frames_ip).decode("utf-8"),
                        chunk_shape=data_out.shape,
+                       interpolate_ok=interpolate_ok,
                        rarr=post_meta["rarr"],
                        zarr=post_meta["zarr"],
+                       tstart=post_meta["tstart"],
+                       tend=post_meta["tend"],
+                       dt=post_meta["dt"],
                        bad_channels=post_meta["bad_channels"],
-                       maxval=maxval, minval=minval, stdval=stdval)
+                       maxval=1.0, minval=-1.0, stdval=0.1)
     return response
 
 # End of file dashboard.py
