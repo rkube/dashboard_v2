@@ -17,6 +17,8 @@ WORKDIR /repos
 ENV FLASK_ENV development
  
 # Checkout the dashboard repo
+# TODO: Combine a git clone and checkout to avoid docker caching
+# https://www.ctl.io/developers/blog/post/more-docker-image-cache-tips
 RUN git clone --branch ecei_player https://github.com/rkube/dashboard_v2.git 
  
 # Change workdir to cloned code repo
@@ -24,6 +26,8 @@ WORKDIR /repos/dashboard_v2
 
 # Install requirements
 RUN pip install -r requirements.txt
+# Install pytorch: https://pytorch.org/get-started/locally/
+RUN pip3 install torch==1.8.1+cpu torchvision==0.9.1+cpu torchaudio==0.8.1 -f https://download.pytorch.org/whl/torch_stable.html
 
 # Make sure the environment is activated:
 RUN echo "Make sure flask is installed:" && python -c "import flask"
