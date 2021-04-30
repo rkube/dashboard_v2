@@ -37,7 +37,7 @@ RUN cd dashboard/web/dashboard_v2_vue && ./node_modules/.bin/vue-cli-service bui
 
 RUN ln -sf /dev/stdout dashboard.log
 RUN ln -sf /secrets/mongo_uri
-RUN ln -sf /secrets/mongo_host
+RUN ln -sf /secrets/mongo_pass
 RUN ln -sf /secrets/mongo_user
 
 ENTRYPOINT [ "/bin/bash", "start.sh"]
