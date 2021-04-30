@@ -62,11 +62,14 @@ def new_query():
     print(f"coll_name = {coll_name}")
 
     # Log in to mongo and try to find the run config for the requested run
-    with open("mongo_secret", "r") as df:
-        lines = df.readlines()
-    mongo_uri = lines[0].strip()
-    mongo_user = lines[1].strip()
-    mongo_pass = lines[2].strip()
+    with open("mongo_uri", "r") as df:
+        mongo_uri = df.readline().strip()
+
+    with open("mongo_pass", "r") as df:
+        mongo_pass = df.readline().strip()
+
+    with open("mongo_user", "r") as df:
+        mongo_user = df.readline().strip()
 
     client = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass)
     db = client.get_database()
@@ -108,11 +111,14 @@ def available_ecei_frames():
 
     coll_name = "test_analysis_" + request.args.get("run_id")
 
-    with open("mongo_secret", "r") as df:
-        lines = df.readlines()
-    mongo_uri = lines[0].strip()
-    mongo_user = lines[1].strip()
-    mongo_pass = lines[2].strip()
+    with open("mongo_uri", "r") as df:
+        mongo_uri = df.readline().strip()
+
+    with open("mongo_pass", "r") as df:
+        mongo_pass = df.readline().strip()
+
+    with open("mongo_user", "r") as df:
+        mongo_user = df.readline().strip()
 
     client = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass)
     coll = client.get_database()[coll_name]
@@ -158,11 +164,14 @@ def get_ecei_frames():
 
     coll_name = "test_analysis_" + run_id
 
-    with open("mongo_secret", "r") as df:
-        lines = df.readlines()
-    mongo_uri = lines[0].strip()
-    mongo_user = lines[1].strip()
-    mongo_pass = lines[2].strip()
+    with open("mongo_uri", "r") as df:
+        mongo_uri = df.readline().strip()
+
+    with open("mongo_pass", "r") as df:
+        mongo_pass = df.readline().strip()
+
+    with open("mongo_user", "r") as df:
+        mongo_user = df.readline().strip()
 
     client = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass)
     db = client.get_database()

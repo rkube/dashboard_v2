@@ -22,11 +22,14 @@ class ECEIDataset(Dataset):
         self.shotnr = shotnr
         self.return_mask = return_mask
 
-        with open("mongo_secret", "r") as df:
-            lines = df.readlines()
-        mongo_uri = lines[0].strip()
-        mongo_user = lines[1].strip()
-        mongo_pass = lines[2].strip()
+        with open("mongo_uri", "r") as df:
+            mongo_uri = df.readline().strip()
+
+        with open("mongo_pass", "r") as df:
+            mongo_pass = df.readline().strip()
+
+        with open("mongo_user", "r") as df:
+            mongo_user = df.readline().strip()
 
         mc = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass)
         db = mc.get_database()
