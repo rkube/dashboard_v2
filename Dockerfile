@@ -36,8 +36,8 @@ RUN cd dashboard/web/dashboard_v2_vue && npm install
 RUN cd dashboard/web/dashboard_v2_vue && ./node_modules/.bin/vue-cli-service build --mode development --no-clean
 
 RUN ln -sf /dev/stdout dashboard.log
-RUN ln -sf /secrets/db_password
-RUN ln -sf /secrets/mongohost
-RUN ln -sf /secrets/mongouser
+RUN ln -sf /secrets/mongo_uri
+RUN ln -sf /secrets/mongo_host
+RUN ln -sf /secrets/mongo_user
 
 ENTRYPOINT [ "/bin/bash", "start.sh"]
