@@ -271,12 +271,21 @@ export default {
       zmax: 0.05
       }
     ];
+
     let plot_layout = {
       title: "ECEI data",
       xaxis: { title: "R / m" },
       yaxis: { title: "Z / m" }
     };
-    Plotly.newPlot(this.$refs.ecei_plot, plot_data, plot_layout);
+
+    let plot_config = {
+      toImageButtonOptions: {
+        height: 1600,
+        width: 600,
+        scale: 1
+      }
+    };
+    Plotly.newPlot(this.$refs.ecei_plot, plot_data, plot_layout, plot_config);
   } // end mounted()
 };
 </script>
