@@ -153,7 +153,7 @@ def get_ecei_frames():
     Numpy arrays have to be converted. Base64 is an easy option to do so.
 
     Test me by executing:
-    $ curl -X GET "http://localhost:5000/dashboard/get_ecei_frames?run_id=25259_GT_null&time_chunk_idx=127
+    $ curl -X GET "http://localhost:5000/dashboard/get_ecei_frames?run_id=25259_GT_null&time_chunk_idx=127"
     """
     run_id = request.args.get("run_id")
     time_chunk_idx = int(request.args.get("time_chunk_idx"))
@@ -202,8 +202,9 @@ def get_ecei_frames():
 
     # There can be errors in the interpolation. This flag tells us.
     interpolate_ok = True
+    num_frames = data_out.shape[1]
     try:
-        for frame_idx in range(data_out.shape[1]):
+        for frame_idx in range(num_frames):
             # Interpolate each frame individually
             frame_new = interpolate.griddata((rr1, zz1), data_out[~bad_channels, frame_idx].ravel(), (rarr, zarr), method='cubic')
             frames_ip[:, frame_idx] = frame_new[:]
@@ -212,8 +213,10 @@ def get_ecei_frames():
         interpolate_ok = False
     frames_ip[np.isnan(frames_ip)] = 0.0
 
-    print("NaNs: ", np.sum(np.isnan(frames_ip)))
-    print("Infs: ", np.sum(np.isinf(frames_ip)))
+    # Frames need to be switched poloidally. Do this here instead of bothering with JS
+    frames_ip = frames_ip.reshape(24, 8, num_frames)
+    frames_ip = frames_ip[:, ::-1, :]
+    frames_ip = frames_ip.reshape(data_out.shape)
 
     # Calculate max, min, std for colorbar
     maxval = frames_ip.max()
@@ -291,6 +294,11 @@ def get_ecei_mask():
 
     # Convert to uint8
     all_masks = all_masks.type(torch.uint8).numpy()
+    # Flip all_masks poloidally to correctly interface with plotly
+    # base64 also expects a c-contiguous array
+    all_masks = np.asarray(all_masks[:, ::-1, :], order="C")
+
+
     print("Returning mask with shape ", all_masks.shape, "at tidx=50: ", all_masks[:, :, 50])
 
     response = jsonify(all_masks=base64.b64encode(all_masks).decode("utf-8"))
