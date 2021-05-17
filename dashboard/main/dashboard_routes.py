@@ -155,6 +155,7 @@ def get_ecei_frames():
     Test me by executing:
     $ curl -X GET "http://localhost:5000/dashboard/get_ecei_frames?run_id=25259_GT_null&time_chunk_idx=127"
     """
+    from .helpers import ip_neighbors
     run_id = request.args.get("run_id")
     time_chunk_idx = int(request.args.get("time_chunk_idx"))
     assert(time_chunk_idx >= 0)
@@ -184,55 +185,44 @@ def get_ecei_frames():
     # Pull data from gridfs
     gridfs_handle = fs.get(post["result_gridfs"])
     data_gfs = gridfs_handle.read()
-    data_out = pickle.loads(data_gfs)
+    frames = pickle.loads(data_gfs)
+    frames = frames.reshape((24, 8, frames.shape[-1]))
 
     # Get meta-data for the timechunk
     post_meta = coll.find_one({"description_new": "chunk_metadata", "chunk_idx": time_chunk_idx})
 
-    bad_channels = np.array(post_meta["bad_channels"])
+    bad_channels = np.array(post_meta["bad_channels"]).reshape((24, 8))
     rarr = np.array(post_meta["rarr"])
     zarr = np.array(post_meta["zarr"])
+    # frames = frames.reshape((24, 8, frames.shape[1]))
 
-    # Interpolate away bad pixels.
-    # frames_ip.shape = (192, 10000)
-    frames_ip = np.zeros_like(data_out)
-    # Get sampling points of only the good data
-    rr1 = rarr[~bad_channels]
-    zz1 = zarr[~bad_channels]
+    # Interpolate using nearest-neighbors for the bad channels
+    bad_px_list = [list(ix) for ix in np.argwhere(bad_channels)] 
+    for bad_px in bad_px_list:
+        print("Interpolating pixel ", bad_px)
+        # bad_px gives the index where we want to interpolat
+        ip_px = ip_neighbors(bad_px, bad_px_list)
+        # ip_px is a list of pixel whose value we use to build the interpolant
+        frames[bad_px[0], bad_px[1], :] = 0.0
+        for px in ip_px:
+            frames[bad_px[0], bad_px[1], :] += frames[px[0], px[1], :]
+        frames[bad_px[0], bad_px[1], :] /= len(ip_px)
+    # flip image poloidally for plotting
+    frames = frames[:, ::-1, :]
+    frames = frames.reshape((192, frames.shape[-1]))
 
-    # There can be errors in the interpolation. This flag tells us.
-    interpolate_ok = True
-    num_frames = data_out.shape[1]
-    try:
-        for frame_idx in range(num_frames):
-            # Interpolate each frame individually
-            frame_new = interpolate.griddata((rr1, zz1), data_out[~bad_channels, frame_idx].ravel(), (rarr, zarr), method='cubic')
-            frames_ip[:, frame_idx] = frame_new[:]
-    except ValueError as e:
-        print(f"Could not interpolate.")
-        interpolate_ok = False
-    frames_ip[np.isnan(frames_ip)] = 0.0
-
-    # Frames need to be switched poloidally. Do this here instead of bothering with JS
-    frames_ip = frames_ip.reshape(24, 8, num_frames)
-    frames_ip = frames_ip[:, ::-1, :]
-    frames_ip = frames_ip.reshape(data_out.shape)
 
     # Calculate max, min, std for colorbar
-    maxval = frames_ip.max()
-    minval = frames_ip.min()
-    meanval = frames_ip.mean()
-    stdval = frames_ip.std()
+    maxval = frames.max()
+    minval = frames.min()
+    meanval = frames.mean()
+    stdval = frames.std()
 
     # ?Try sending as octet-stream: https://tools.ietf.org/html/rfc2046
     # For now: encode as base64
 
-    print("Returning frames with shape ", frames_ip.shape, "at tidx=50: ", frames_ip[50, :])
-
-
-    response = jsonify(time_chunk_data=base64.b64encode(frames_ip).decode("utf-8"),
-                       chunk_shape=frames_ip.shape,
-                       interpolate_ok=interpolate_ok,
+    response = jsonify(time_chunk_data=base64.b64encode(frames).decode("utf-8"),
+                       chunk_shape=frames.shape,
                        rarr=post_meta["rarr"],
                        zarr=post_meta["zarr"],
                        tstart=post_meta["tstart"],
