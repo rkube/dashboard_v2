@@ -17,13 +17,7 @@ import gridfs
 import json
 from . import dashboard
 
-@dashboard.route('/hello')
-def hello_dashboard():
-    return render_template("hello_dashboard.html")
 
-@dashboard.route('/hello_vue')
-def hello_vue():
-    return send_from_directory("templates", "hello_vue.html")
 
 @dashboard.route("/newvue")
 def hello_newvue():
@@ -35,7 +29,7 @@ def hello_newvue():
 @dashboard.route("/ecei_player")
 def ecei_player():
     try:
-        return render_template("ecei_player.html")
+        return render_template("index.html")
     except TemplateNotFound:
         abort(404)
 
