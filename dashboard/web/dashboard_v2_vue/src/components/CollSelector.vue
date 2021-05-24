@@ -2,13 +2,9 @@
   <div>
     <input v-model="coll_name" placeholder="ABCDEF" />
     <!--button v-on:click="query_collection">Query collection</button-->
-    <loading-overlay
-      :active="isLoading"
-      :is-full-page="fullPage"
-      :loader="loader"
-    >
+    <loading-overlay :active.sync="isLoading" :is-full-page="fullPage" :loader="icon">
       <div class="loader__container"></div>
-    </loading-overlay>
+    </loading-overlay >
     <button @click.prevent="query_collection">Query collection</button>
     <p>Collection name is {{ coll_name }}</p>
   </div>
@@ -21,13 +17,13 @@ const axios = require("axios").default;
 
 export default {
   name: "CollSelector",
-  data: function() {
+  data() {
     return {
       coll_name: "ABC123",
       run_config: "",
       isLoading: false,
-      fullPage: true,
-      loader: "dots"
+      fullPage: false,
+      icon: "dots"
     };
   },
   components: {
@@ -37,10 +33,10 @@ export default {
     query_collection: function() {
       console.log("starting query_location");
       this.isLoading = true;
-      //setTimeout(() => {
-      //  this.isLoading = false
-      //}, 5000);
-      var vm = this;
+      setTimeout(() => {
+        this.isLoading = false
+      }, 5000);
+      /*var vm = this;
       var request = "/dashboard/query_db?coll_name=" + vm.coll_name;
       axios.get(request).then(function(response) {
         console.log(response.data);
@@ -49,7 +45,7 @@ export default {
           "Back in query_collection: " + vm.$store.state.run_config.run_id
         );
       });
-      this.isLoading = false;
+      //this.isLoading = false;*/
       console.log("ended query_location");
     }
   }
