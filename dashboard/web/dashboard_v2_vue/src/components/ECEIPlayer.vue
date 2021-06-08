@@ -20,6 +20,7 @@
       <label for="ntm-regions">Show NTM region proposal </label>
     </div>
     <div class="row">
+      <loading :active="isLoading" :is-full-page="fullPage" :loader="icon" />
       <button v-on:click="get_time_chunk_data">Load data</button>
     </div>
     <div class="column">
@@ -49,11 +50,14 @@ import { create, all } from "mathjs";
 const math = create(all);
 import VueSlider from "vue-slider-component";
 import "vue-slider-component/theme/default.css";
+import Loading from "vue-loading-overlay";
+import "vue-loading-overlay/dist/vue-loading.css";
 
 export default {
   name: "ECEIPlayer",
   components: {
-    VueSlider
+    VueSlider,
+    Loading
   },
   data: function() {
     return {
@@ -73,7 +77,10 @@ export default {
           y: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
           type: "contour"
         }
-      ]
+      ],
+      isLoading: false,
+      fullPage: false,
+      icon: "dots"
     };
   },
   methods: {
@@ -101,6 +108,8 @@ export default {
     get_time_chunk_data: async function() {
       // Fetches ECEI data from backend
       var run_id = this.$store.getters.get_run_config.run_id;
+      // Loader
+      this.isLoading = true;
       // Cache data from selected time chunk locally for plotting.
       if(this.selected_time_chunk !== this.current_time_chunk)
       {
@@ -174,6 +183,7 @@ export default {
         console.log("get_time_chunk_data. sending update to plotly", update);
         Plotly.restyle(this.$refs.ecei_plot, update);
       } // end if this.selected_time_chunk != this.current_time_chunk
+      this.isLoading = false;
     },
     update_plot_tidx: function() {
       /** 
