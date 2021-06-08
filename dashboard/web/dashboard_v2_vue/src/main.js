@@ -10,8 +10,10 @@ Vue.config.productionTip = false;
 
 new Vue({
   store: store,
-  created: function () {
-    console.log("App is created. location: " + location.host + ", port:" + location.port);
+  created: function() {
+    console.log(
+      "App is created. location: " + location.host + ", port:" + location.port
+    );
   },
   render: h => h(App)
 }).$mount("#app");

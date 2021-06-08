@@ -36,11 +36,15 @@ export default {
         this.isLoading = false
       }, 5000);
       var request = "/dashboard/query_db?coll_name=" + vm.coll_name;
-      axios.get(request).then(function (response) {
+      axios.get(request).then(function(response) {
         console.log(response.data);
         vm.$store.dispatch("set_run_config", response.data);
-        console.log("Back in query_collection: " + vm.$store.state.run_config.run_id);
-      });      
+        console.log(
+          "Back in query_collection: " + vm.$store.state.run_config.run_id
+        );
+      });
+      //this.isLoading = false;*/
+      console.log("ended query_location");
     }
   }
 };
