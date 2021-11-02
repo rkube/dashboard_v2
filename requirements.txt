@@ -48,7 +48,7 @@ pluggy==0.13.1
 poyo==0.5.0
 prompt-toolkit==3.0.2
 ptyprocess==0.6.0
-py==1.8.1
+py==1.10.0
 Pygments==2.5.2
 pymongo==3.9.0
 pyparsing==2.4.6
