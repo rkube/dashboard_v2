@@ -114,17 +114,19 @@ class room_manager():
         self.subscribed_clients = []
         self.thread = None
 
-        with open("mongo_secret", "r") as df:
-            lines = df.readlines()
-        mongo_uri = lines[0].strip()
-        mongo_user = lines[1].strip()
-        mongo_pass = lines[2].strip()
-        mongo_collection = lines[3].strip()
+        with open("mongo_uri", "r") as df:
+            mongo_uri = df.readline().strip()
+
+        with open("mongo_pass", "r") as df:
+            mongo_pass = df.readline().strip()
+
+        with open("mongo_user", "r") as df:
+            mongo_user = df.readline().strip()
 
         #print(f"__{mongo_user}__, __{mongo_pass}__")
         client = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass)
         self.db = client.get_database()
-        self.coll = self.db[mongo_collection]
+        self.coll = self.db["test_analysis_ABC125"]
         # Get the channel serialization for the analysis
         res = self.coll.find_one({"description": "metadata", "analysis": self.analysis_type})
         target_pair = channel_pair(self.ch1, self.ch2)

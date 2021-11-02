@@ -2,7 +2,10 @@
   <div id="app">
     <div class="container">
       <div class="row">
-        <CollSelector/>
+         <CollSelector/>
+      </div>
+      <div class="row">
+         <ECEIPlayer/>
       </div>
       <div class="row">
         <DashboardView plotid="plot1"></DashboardView>
@@ -16,14 +19,16 @@
 
 <script>
 import Vue from "vue/dist/vue.js";
+//import Vuex from "vuex/dist/vuex.js";
 import CollSelector from "./components/CollSelector.vue";
 import DashboardView from "./components/DashboardView.vue";
-
+import ECEIPlayer from "./components/ECEIPlayer.vue";
 
 Vue.config.productionTip = false;
 export default {
   components: {
     CollSelector,
+    ECEIPlayer,
     DashboardView
   }
 };

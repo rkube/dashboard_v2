@@ -11,12 +11,20 @@ Renders a live-plot of data pushed to a mongodb database to a web-page.
     * The backend is written in [flask](https://flask.palletsprojects.com/en/1.1.x/) and ingests data from [mongodb](https://www.mongodb.com/)
 
 
-Run from the main directory 
+Build the javascript-dependent part:
+```
+$ cd dashboard/web/dashboard_v2_vue
+$ npm install -g @vue/cli
+$ npm install
+$ npm run build
+```
+
+Then run from the main directory 
 
 ```
 $ export FLASK_ENV=development 
 $ python backend.py 
 ```
 
-Open web-browser to http://localhost:5000/dashboard/hello_vue 
+Open your web-browser to http://localhost:5000/dashboard/ecei_player 
 

@@ -145,8 +145,6 @@ export default {
     vm.socket.on("new_data", function(msg) {
       vm.current_data = msg["data"];
       console.log("I just got new data" + msg["data"].length);
-      //console.log("Length of current x-axis: " + vm.traces[0].x.length)
-      //console.log("This is the current x-axis: " + vm.traces[0].x);
 
       // If-clause will likely be executed when the first data packet arrives.
       // Create new x-axis.

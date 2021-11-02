@@ -1,5 +1,5 @@
 #!/bin/bash
 
-source /opt/conda/etc/profile.d/conda.sh
-conda activate flask
+export FLASK_ENV=development
+ln -sf /run/secrets/db_password ./db_password
 python backend.py
