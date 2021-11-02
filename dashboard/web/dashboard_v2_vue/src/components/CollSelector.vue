@@ -30,19 +30,31 @@ export default {
   methods: {
     query_collection: function() {
       var vm = this;
-      console.log("starting query_location");
+      console.log("starting query_collection()");
       this.isLoading = true;
       setTimeout(() => {
         this.isLoading = false
       }, 5000);
-      var request = "/dashboard/query_db?coll_name=" + vm.coll_name;
-      axios.get(request).then(function(response) {
-        console.log(response.data);
-        vm.$store.dispatch("set_run_config", response.data);
-        console.log(
-          "Back in query_collection: " + vm.$store.state.run_config.run_id
-        );
-      });
+      var url = "/dashboard/query_db?coll_name=" + vm.coll_name;
+      console.log(url);
+      // Await a request
+      // We do all assignment in the then since fetch returns a promise.
+      // See: https://dev.to/ramonak/javascript-how-to-access-the-return-value-of-a-promise-object-1bck
+      fetch(url).then( function(response) {
+                console.log("Fetching shot configuration: " + response.ok); // This logs true if we got a good respnse
+                return(response.json())  // This returns the json of the response to the next >>then<< functions
+        });
+      
+      console.log("this.$store.some_value" + this.$store.some_value);
+      this.$store.commit("set_run_config", {"item": 123});
+
+      //axios.get(request).then(function(response) {
+      //  console.log(response.data);
+      //  vm.$store.dispatch("set_run_config", response.data);
+      //  console.log(
+      //    "Back in query_collection: " + vm.$store.state.run_config.run_id
+      //  );
+      //});
       //this.isLoading = false;*/
       console.log("ended query_location");
     }

@@ -1,39 +1,46 @@
 <template>
-  <div id="app">
+<body>
+  <h1> DELTA ECEi dashboard</h1>
+  <div id="my-app">
     <div class="container">
       <div class="row">
          <CollSelector/>
       </div>
-      <div class="row">
+      <!--div class="row">
          <ECEIPlayer/>
-      </div>
-      <div class="row">
+      </div-->
+      <!--div class="row">
         <DashboardView plotid="plot1"></DashboardView>
-      </div>
-      <div class="row">
+      </div-->
+      <!--div class="row">
         <DashboardView plotid="plot2"></DashboardView>
-      </div>
+      </div-->
     </div>
   </div>
+  </body>
 </template>
 
-<script>
-import Vue from "vue/dist/vue.js";
-//import Vuex from "vuex/dist/vuex.js";
-import CollSelector from "./components/CollSelector.vue";
-import DashboardView from "./components/DashboardView.vue";
-import ECEIPlayer from "./components/ECEIPlayer.vue";
 
-Vue.config.productionTip = false;
+// Script section:
+// Javascript imports, data handling, etc.
+<script>
+
+import CollSelector from "./components/CollSelector.vue";
+// import DashboardView from "./components/DashboardView.vue";
+// import ECEIPlayer from "./components/ECEIPlayer.vue";
+
+
 export default {
+  name: 'ECEIdashboard',
   components: {
-    CollSelector,
-    ECEIPlayer,
-    DashboardView
+    CollSelector
+    // ECEIPlayer,
+    // DashboardView
   }
-};
+}
 </script>
 
+// Style section
 <style>
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
