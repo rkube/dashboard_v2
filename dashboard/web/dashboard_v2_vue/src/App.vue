@@ -1,14 +1,16 @@
 <template>
 <body>
-  <h1> DELTA ECEi dashboard</h1>
-  <div id="my-app">
+  <h1> DELTA ECEi dashboard test12</h1>
+  <div id="app">
     <div class="container">
       <div class="row">
+          coll-selector
          <CollSelector/>
       </div>
-      <!--div class="row">
+      <div class="row">
+          ecei-player
          <ECEIPlayer/>
-      </div-->
+      </div>
       <!--div class="row">
         <DashboardView plotid="plot1"></DashboardView>
       </div-->
@@ -27,14 +29,14 @@
 
 import CollSelector from "./components/CollSelector.vue";
 // import DashboardView from "./components/DashboardView.vue";
-// import ECEIPlayer from "./components/ECEIPlayer.vue";
+import ECEIPlayer from "./components/ECEIPlayer.vue";
 
 
 export default {
   name: 'ECEIdashboard',
   components: {
-    CollSelector
-    // ECEIPlayer,
+    CollSelector,
+    ECEIPlayer
     // DashboardView
   }
 }
