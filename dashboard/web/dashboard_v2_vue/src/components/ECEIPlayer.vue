@@ -1,16 +1,19 @@
 <template>
   <div>
-    <div class="column">
+    <div class="row">
+    <!--div class="column"-->
       <label>Select a time chunk</label>
       <select v-model="selected_chunk">
         <option v-for="chunk in this.$store.state.available_chunks" v-bind:key="chunk">
           {{ chunk }}
         </option>
       </select>
+    <!--/div-->
+    <!--div class="column"-->
+      <loading :active="isLoading" :is-full-page="fullPage" :loader="icon" />
+      <button v-on:click="get_time_chunk_data">Load data</button>
+    <!--/div-->
     </div>
-    <!--div class="column">
-      <button v-on:click="refresh_time_chunks">Refresh</button>
-    </div-->
     <div class="column">
       <input 
         type="checkbox"
@@ -19,12 +22,9 @@
       >
       <label for="ntm-regions">Show NTM region proposal </label>
     </div>
-    <div class="row">
-      <loading :active="isLoading" :is-full-page="fullPage" :loader="icon" />
-      <button v-on:click="get_time_chunk_data">Load data</button>
-    </div>
+
     <div class="column">
-            <div>Time index in chunk {{ selected_time_idx }} Time in shot: {{ selected_time }}s</div>
+            <div>Time index in chunk {{ selected_time_idx }}   Time in shot: {{ selected_time_str }}s</div>
       <vue-slider
         v-model="selected_time_idx"
         v-on:change="update_plot_tidx"
@@ -64,11 +64,12 @@ export default {
       current_time_chunk: 0,
       tstart: 0.0,
       dt: 0.0001,
-      selected_time: 0.005,
       show_region_proposal: false,
       time_chunk_data: null,
       time_chunk_mask: null,
       selected_time_idx: 1,
+      selected_time_str: 0.0,
+
       traces: [
         {
           x: [1, 2, 3, 4, 5, 6, 7, 8],
@@ -193,7 +194,8 @@ export default {
       }
       var new_z = math.reshape(this.time_chunk_data[this.selected_time_idx], [24, 8]);
       var update = {z: [new_z], ncontours: 32};
-      this.selected_time = this.tstart + this.selected_time_idx * this.dt;
+
+      
       Plotly.restyle(this.$refs.ecei_plot, update, 0);
       // If the magnetic island region proposal is active we need to update that plot as well
       if(this.show_region_proposal === true){
@@ -201,6 +203,9 @@ export default {
         update = {z: [new_z]};
         Plotly.restyle(this.$refs.ecei_plot, update, 1);
       }
+      // Update the selected time.
+      //let tt = this.tstart + this.selected_time_idx * this.dt;
+      this.selected_time_str = (Math.round((this.tstart + this.selected_time_idx * this.dt) * 1000000) / 1000000).toFixed(6);
     },
     toggle_region_proposal: function() {
       /**
@@ -272,14 +277,19 @@ export default {
       type: 'contour', 
       ncontours: 32,
       zmin: -0.05,
-      zmax: 0.05
+      zmax: 0.05,
+      colorbar: {
+        title: "δTₑ/〈Tₑ〉",
+        titleside: "right"
       }
+      },
     ];
 
     let plot_layout = {
       title: "ECEI data",
       xaxis: { title: "R / m" },
-      yaxis: { title: "Z / m" }
+      yaxis: { title: "Z / m" },
+      zaxis: { title: "δTₑ/〈Tₑ〉"}
     };
 
     let plot_config = {
