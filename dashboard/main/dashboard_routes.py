@@ -2,7 +2,7 @@
 # file dashboard_v2/backend/dashboard/dashboard_routes.py
 
 from flask import render_template, send_from_directory, request, jsonify, current_app
-import io
+import os
 import pickle
 import base64
 import numpy as np
@@ -33,6 +33,11 @@ def ecei_player():
     except TemplateNotFound:
         abort(404)
 
+@dashboard.route("/favicon.ico")
+def favicon():
+    # Favicon is in static/img
+    return send_from_directory(os.path.join(dashboard.root_path, "..", "static", "img"),
+                               "favicon.ico", mimetype="image/vnd.microsoft.icon")
 
 @dashboard.route("/query_db")
 def new_query():
