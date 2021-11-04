@@ -4,7 +4,7 @@
     <!--button v-on:click="query_collection">Query collection</button-->
     <loading :active="isLoading" :is-full-page="fullPage" :loader="icon" />
     <button @click.prevent="query_collection">Query collection</button>
-    <p>Collection name is {{ coll_name }}</p>
+    <p>Loaded collection {{ coll_name }}</p>
   </div>
 </template>
 

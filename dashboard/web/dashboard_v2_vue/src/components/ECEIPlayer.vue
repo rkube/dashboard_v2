@@ -2,15 +2,15 @@
   <div>
     <div class="column">
       <label>Select a time chunk</label>
-      <select v-model="selected_time_chunk">
-        <option v-for="chunk in available_time_chunks" v-bind:key="chunk">
+      <select v-model="selected_chunk">
+        <option v-for="chunk in this.$store.state.available_chunks" v-bind:key="chunk">
           {{ chunk }}
         </option>
       </select>
     </div>
-    <div class="column">
+    <!--div class="column">
       <button v-on:click="refresh_time_chunks">Refresh</button>
-    </div>
+    </div-->
     <div class="column">
       <input 
         type="checkbox"
@@ -61,12 +61,10 @@ export default {
   },
   data: function() {
     return {
-      selected_time_chunk: 0,
       current_time_chunk: 0,
       tstart: 0.0,
       dt: 0.0001,
       selected_time: 0.005,
-      available_time_chunks: [0],
       show_region_proposal: false,
       time_chunk_data: null,
       time_chunk_mask: null,
@@ -83,38 +81,37 @@ export default {
       icon: "dots"
     };
   },
-  methods: {
-    refresh_time_chunks: async function() {
-      // Query available ECEI time chunks for the selected collection
-      // Access the current collection name. We do this by quering the vuex store.
-      // See https://www.smashingmagazine.com/2020/01/data-components-vue-js/
-      // Async function needed so that we can use await axios.get call.
-      var run_id = this.$store.getters.get_run_config.run_id;
-      console.log("Refreshing time chunks. Collection is: " + run_id);
-
-      var request = "/dashboard/available_ecei_frames?run_id=" + run_id;
-      // let is block scope. Inside a function this is the same as a variable
-      // See: https://www.w3schools.com/JS/js_let.asp
-      let response = await axios.get(request);
-      console.log("refresh_time_chunks: response");
-      console.log(response);
-      this.available_time_chunks = response.data["available_chunks"];
-
-      if(
-        this.available_time_chunks.includes(this.selected_time_chunk) == false) {
-        this.selected_time_chunk = this.available_time_chunks[0];
+  computed: {
+    // We want to set up a two-way data binding for the v-model in the
+    // selected time chunk slider and the selected_chunk in the store.
+    // To do so, I am following this tutorial blog-post: 
+    // https://markus.oberlehner.net/blog/form-fields-two-way-data-binding-and-vuex/
+    selected_chunk: {
+      get() {
+        console.log("Calling computed.selected_chunk.get");
+        return this.$store.state.selected_chunk;
+      },
+      set(value) {
+        // Check if value is in the array
+        console.log("Calling computed.selected_chunk.set. New value: " + value);
+        console.log(this.$store.state.available_chunks);
+        this.$store.commit('set_selected_chunk', value);
       }
-    },
+    }
+  },
+  methods: {
     get_time_chunk_data: async function() {
       // Fetches ECEI data from backend
       var run_id = this.$store.getters.get_run_config.run_id;
       // Loader
       this.isLoading = true;
+      console.log("Loading data. Selected in store:  " + this.$store.state.selected_chunk);
       // Cache data from selected time chunk locally for plotting.
-      if(this.selected_time_chunk !== this.current_time_chunk)
+      if(this.current_time_chunk !== this.$store.state.selected_chunk)
       {
         // Fetch ECEI data for plotting and store returned values
-        var request = "/dashboard/get_ecei_frames?run_id=" + run_id + "&time_chunk_idx=" + this.selected_time_chunk;
+        var request = "/dashboard/get_ecei_frames?run_id=" + run_id + "&time_chunk_idx=" + this.$store.state.selected_chunk;
+        this.current_time_chunk = this.$store.state.selected_chunk
         let response = await axios.get(request);
         this.bad_channels = response.data["bad_channels"];
         this.tstart = response.data["tstart"];
@@ -126,9 +123,6 @@ export default {
         let binary_string = atob(response.data["time_chunk_data"]);
         let rarr = response.data["rarr"];
         let zarr = response.data["zarr"];
-
-        // Update the time-chunk for the app
-        this.curent_time_chunk = this.selected_time_chunk;
         
         // Convert time_chunk_data from base64 to float64 array
         let buffer = new ArrayBuffer(binary_string.length);
@@ -142,7 +136,7 @@ export default {
         this.time_chunk_data = math.transpose(math.reshape(this.time_chunk_data, chunk_shape));
 
         // Fetch region proposal for Magnetic Island location
-        request = "/dashboard/get_ecei_mask?run_id=" + run_id + "&time_chunk_idx=" + this.selected_time_chunk;
+        request = "/dashboard/get_ecei_mask?run_id=" + run_id + "&time_chunk_idx=" + this.selected_chunk;
         response = await axios.get(request);
         binary_string = atob(response.data["all_masks"]);
         buffer = new ArrayBuffer(binary_string.length)
