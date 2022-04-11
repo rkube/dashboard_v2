@@ -54,7 +54,6 @@ def new_query():
 
     Tip: Try ABC123
     """
-    print("Hello, query")
     # Get the collection name from the request
     coll_name = request.args.get("coll_name")
     coll_name = "test_analysis_" + coll_name
@@ -70,7 +69,9 @@ def new_query():
     with open("mongo_user", "r") as df:
         mongo_user = df.readline().strip()
 
-    client = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass)
+    print(f"{mongo_uri}__{mongo_user}__, __{mongo_pass}__")
+
+    client = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass, directConnection=True)
     db = client.get_database()
     coll = db[coll_name]
     post = coll.find_one({"run_config": {"$exists": True}})
@@ -82,18 +83,14 @@ def new_query():
     # Json expects double quotes, not single quotes
     s2 = s1.replace("\'", "\"")
     # Json expects bool with lower-case letters, not upper-case
-    s3 = s2.replace("True", "true").replace("False", "false")
-    # Load as json
-    print("s3 = ", s3)
-    post_js = json.loads(s3)
-    print("post_js = ", post_js)
+    s3 = json.loads(s2.replace("True", "true").replace("False", "false"))
     
-    return json.dumps(post_js)
+    return jsonify(run_config = s3)
 
 
 @dashboard.route("/available_ecei_frames")
 def available_ecei_frames():
-    """Queries which ECEI frame are available given for a given shot number.
+    """Queries which ECEI frame are available given for a given analysis run_id.
 
     Arguments:
         run_id: str
@@ -119,7 +116,7 @@ def available_ecei_frames():
     with open("mongo_user", "r") as df:
         mongo_user = df.readline().strip()
 
-    client = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass)
+    client = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass, directConnection=True)
     coll = client.get_database()[coll_name]
 
     ecei_frame_list = []
@@ -130,6 +127,47 @@ def available_ecei_frames():
     
     response = jsonify(available_chunks = ecei_frame_list)
     return response
+
+@dashboard.route("/get_metadata")
+def get_metadata():
+    """Queries the metadata for a given analysis run_id.
+
+    Arguments:
+        run_id: str
+            Run ID to construct the database name
+
+    This routine looks for a post with the field `run_id` set to the passed run_id and a field
+    called `run_config`.
+
+    Test me by executing:
+    $ curl -X GET "http://localhost:5000/dashboard/get_metadata?run_id=ABC234"
+    """
+
+    coll_name = "test_analysis_" + request.args.get("run_id")
+
+    with open("mongo_uri", "r") as df:
+        mongo_uri = df.readline().strip()
+
+    with open("mongo_pass", "r") as df:
+        mongo_pass = df.readline().strip()
+
+    with open("mongo_user", "r") as df:
+        mongo_user = df.readline().strip()
+
+    client = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass, directConnection=True)
+    coll = client.get_database()[coll_name]
+
+    try:
+        diagnostic = coll.find_one({"run_config": {"$exists": True}})["run_config"]["diagnostic"]
+        metadata = {"shotnr": diagnostic["shotnr"],
+                    "device": diagnostic["dev"],
+                    "name": diagnostic["name"]}
+    except TypeError:
+        metadata = {"shotnr": "TypeError in Query", "device": "TypeError in Query", "name": "TypeError in Query"}
+
+    response = jsonify(metadata)
+    return response
+
 
 
 @dashboard.route("/get_ecei_frames")
@@ -173,12 +211,13 @@ def get_ecei_frames():
     with open("mongo_user", "r") as df:
         mongo_user = df.readline().strip()
 
-    client = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass)
+    client = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass, directConnection=True)
     db = client.get_database()
     
     # Open the collection and GridFS
     coll = db[coll_name]
     fs = gridfs.GridFS(db)
+    # Get the post with the 
     # Get the data post
     post = coll.find_one({"description": "analysis results", "analysis_name": "task_null", "chunk_idx": time_chunk_idx})
     # Pull data from gridfs
@@ -193,7 +232,6 @@ def get_ecei_frames():
     bad_channels = np.array(post_meta["bad_channels"]).reshape((24, 8))
     rarr = np.array(post_meta["rarr"])
     zarr = np.array(post_meta["zarr"])
-    # frames = frames.reshape((24, 8, frames.shape[1]))
 
     # Interpolate using nearest-neighbors for the bad channels
     bad_px_list = [list(ix) for ix in np.argwhere(bad_channels)] 
@@ -217,6 +255,9 @@ def get_ecei_frames():
     meanval = frames.mean()
     stdval = frames.std()
 
+    print(maxval, minval, meanval, stdval)
+    frames[np.isnan(frames)] = -1.0
+
     # ?Try sending as octet-stream: https://tools.ietf.org/html/rfc2046
     # For now: encode as base64
 
@@ -229,6 +270,8 @@ def get_ecei_frames():
                        dt=post_meta["dt"],
                        bad_channels=post_meta["bad_channels"],
                        maxval=maxval, minval=minval, meanval=meanval, stdval=stdval)
+
+    print("built response: ", response)
     return response
 
 

@@ -11,7 +11,7 @@ const store = createStore({
   state () {
     return {
       // Name of the collection that is queried
-      collections_name: null,
+      collection_name: null,
       // Run configuration used by DELTA
       run_config: null,
       // Chunks of analyzed data in the database
@@ -29,8 +29,9 @@ const store = createStore({
       // query_run_config will load the response from that url as the run_config
       axios.get(url).then(
         function (response) {
+          console.log("query_run_config got this: ", response.data["run_config"]);
           // Call the mutation with the response data
-          commit('set_run_config', response.data);
+          commit('set_run_config', response.data["run_config"]);
         }
       ).then(
         function () {

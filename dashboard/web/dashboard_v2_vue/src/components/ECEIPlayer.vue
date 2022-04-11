@@ -193,19 +193,23 @@ export default {
         return;
       }
       var new_z = math.reshape(this.time_chunk_data[this.selected_time_idx], [24, 8]);
-      var update = {z: [new_z], ncontours: 32};
-
+      var data_update = {z: [new_z], ncontours: 32};
+      // Set the new time in the plot title
+      // Update the selected time.
+      let tt = (Math.round((this.tstart + this.selected_time_idx * this.dt) * 1000000) / 1000000).toFixed(6);
+      this.selected_time_str = tt; //(Math.round((this.tstart + this.selected_time_idx * this.dt) * 1000000) / 1000000).toFixed(6);
       
-      Plotly.restyle(this.$refs.ecei_plot, update, 0);
+      Plotly.restyle(this.$refs.ecei_plot, data_update, 0);
+      // Extract ECEI device name
+      let dev = this.$store.state.run_config["diagnostic"]["dev"];
+      Plotly.relayout(this.$refs.ecei_plot, {title: "KSTAR ECEI " + dev + " t = " + String(tt) + "s"});
+
       // If the magnetic island region proposal is active we need to update that plot as well
       if(this.show_region_proposal === true){
         new_z = math.reshape(this.time_chunk_mask[this.selected_time_idx], [24, 8]);
-        update = {z: [new_z]};
-        Plotly.restyle(this.$refs.ecei_plot, update, 1);
+        data_update = {z: [new_z]};
+        Plotly.restyle(this.$refs.ecei_plot, data_update, 1);
       }
-      // Update the selected time.
-      //let tt = this.tstart + this.selected_time_idx * this.dt;
-      this.selected_time_str = (Math.round((this.tstart + this.selected_time_idx * this.dt) * 1000000) / 1000000).toFixed(6);
     },
     toggle_region_proposal: function() {
       /**
@@ -286,7 +290,7 @@ export default {
     ];
 
     let plot_layout = {
-      title: "ECEI data",
+      title: "ECEI data t = -1.0s",
       xaxis: { title: "R / m" },
       yaxis: { title: "Z / m" },
       zaxis: { title: "δTₑ/〈Tₑ〉"}

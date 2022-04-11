@@ -31,7 +31,7 @@ class ECEIDataset(Dataset):
         with open("mongo_user", "r") as df:
             mongo_user = df.readline().strip()
 
-        mc = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass)
+        mc = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass, directConnection=True)
         db = mc.get_database()
         gfs = gridfs.GridFS(db)
         coll_pre = db.get_collection(coll_name)

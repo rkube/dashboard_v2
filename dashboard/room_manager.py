@@ -123,8 +123,7 @@ class room_manager():
         with open("mongo_user", "r") as df:
             mongo_user = df.readline().strip()
 
-        #print(f"__{mongo_user}__, __{mongo_pass}__")
-        client = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass)
+        client = MongoClient(mongo_uri, username=mongo_user, password=mongo_pass, directConnection=True)
         self.db = client.get_database()
         self.coll = self.db["test_analysis_ABC125"]
         # Get the channel serialization for the analysis

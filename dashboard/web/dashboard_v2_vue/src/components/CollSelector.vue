@@ -1,10 +1,10 @@
 <template>
   <div>
-    <input v-model="coll_name" placeholder="ABCDEF" />
+    <input v-model="collection_name" placeholder="ABCDEF" />
     <!--button v-on:click="query_collection">Query collection</button-->
     <loading :active="isLoading" :is-full-page="fullPage" :loader="icon" />
     <button @click.prevent="query_collection">Query collection</button>
-    <p>Loaded collection {{ coll_name }}</p>
+    <p>Loaded collection {{ collection_name }}</p>
   </div>
 </template>
 
@@ -16,7 +16,7 @@ export default {
   name: "CollSelector",
   data() {
     return {
-      coll_name: "ABC123",
+      collection_name: "ABC123",
       run_config: "",
       isLoading: false,
       fullPage: false,
@@ -34,7 +34,7 @@ export default {
       setTimeout(() => {
         this.isLoading = false
       }, 5000);
-      var url = "/dashboard/query_db?coll_name=" + vm.coll_name;
+      var url = "/dashboard/query_db?coll_name=" + vm.collection_name;
       // query_run_config will load the response from that url as the run_config
       this.$store.dispatch("query_run_config", url);
       this.isLoading = false;
